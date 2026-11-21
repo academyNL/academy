@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academie – Wiskunde, Spaans & Frans (2 vwo)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(99, 102, 241, 0.11) 0%, transparent 40%),
+        radial-gradient(circle at 88% 18%, rgba(14, 165, 233, 0.11) 0%, transparent 42%),
+        radial-gradient(circle at 50% 92%, rgba(236, 72, 153, 0.07) 0%, transparent 45%),
+        #f3f6fc;
+      color: #0f172a;
+      overflow-x: hidden;
+    }
+    .math-font { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .view-transition { animation: fadeSlideIn 0.36s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(14px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    
+    @keyframes correctPulseBounce {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
+      35% { transform: scale(1.02); box-shadow: 0 16px 36px -6px rgba(16, 185, 129, 0.35); }
+      100% { transform: scale(1); box-shadow: 0 8px 24px -6px rgba(16, 185, 129, 0.15); }
+    }
+    .animate-correct-card {
+      animation: correctPulseBounce 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border-color: #10b981 !important;
+    }
+
+    @keyframes wrongShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
+    }
+    .animate-wrong-card {
+      animation: wrongShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+      border-color: #f43f5e !important;
+      box-shadow: 0 14px 32px -6px rgba(244, 63, 94, 0.25) !important;
+    }
+
+    @keyframes confettiBurst {
+      0% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
+      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.4) rotate(var(--rot)); }
+    }
+    .confetti-particle {
+      position: fixed; pointer-events: none; z-index: 999;
+      animation: confettiBurst 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+    .card-hover { transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.24s ease; }
+    .card-hover:hover { transform: translateY(-4px); }
+    .math-grid-pattern {
+      background-image: linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white">
+
+  <!-- NAVIGATIEBALK -->
+  <nav class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-xl text-white border-b border-white/10 shadow-lg">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-[70px] flex items-center justify-between gap-2">
+      <button onclick="goToSubjectChoice()" type="button" class="flex items-center gap-3 text-left group focus:outline-none">
+        <span class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-indigo-500 via-blue-500 to-cyan-400 flex items-center justify-center font-extrabold text-xl shadow-lg group-hover:scale-105 transition-all">🎓</span>
+        <div>
+          <span class="font-extrabold tracking-tight text-base sm:text-lg block bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">Academie</span>
+          <span class="text-[11px] text-indigo-300/90 font-medium hidden sm:block">Wiskunde, Spaans & Frans Dashboard</span>
+        </div>
+      </button>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button onclick="openDashboard()" type="button" class="px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-xs sm:text-sm font-bold border border-white/15 transition-all flex items-center gap-1.5">
+          <span>📊</span>
+          <span>Mijn Dashboard</span>
+        </button>
+
+        <!-- Level Badge in Navigatie -->
+        <div id="navLevelBadge" class="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border border-purple-400/30 px-3 py-1.5 rounded-full text-xs font-semibold text-purple-200">
+          <span>⭐</span>
+          <span id="navUserLevel" class="text-purple-300 font-extrabold">Level 1</span>
+        </div>
+
+        <div class="flex items-center gap-2 bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-400/30 px-3.5 py-1.5 rounded-full text-xs font-semibold text-amber-200">
+          <span>🏆</span>
+          <span id="navTotalPoints" class="text-amber-300 font-extrabold math-font text-sm">0 pt</span>
+        </div>
+
+        <button id="backToHomeBtn" type="button" onclick="goToSubjectChoice()" class="hidden text-xs sm:text-sm font-bold bg-white/10 hover:bg-white/20 text-white px-3.5 py-2 rounded-full border border-white/15 transition-all flex items-center gap-1.5">
+          <span>←</span>
+          <span>Vakkeuze</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10">
+
+    <!-- VIEW 0: VAKKEUZE HOOFDPAGINA -->
+    <section id="subjectChoiceView" class="view-transition space-y-8">
+      <div class="glass-card rounded-[34px] border border-white p-7 sm:p-11 shadow-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 text-white relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-72 h-72 rounded-full bg-blue-500/20 blur-3xl pointer-events-none"></div>
+        <div class="relative z-10 max-w-2xl">
+          <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-cyan-200 text-xs font-bold mb-4">⭐ Jouw Academie</span>
+          <h1 class="text-3xl sm:text-5xl font-black tracking-tight mb-4">Welk vak wil je oefenen?</h1>
+          <p class="text-indigo-100/85 text-base sm:text-lg mb-6">Kies Wiskunde H5, Spaans of Frans (Libre Service Unité 2). Verdien punten om in level te stijgen!</p>
+          <button onclick="openDashboard()" class="px-6 py-3 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold text-sm backdrop-blur-md transition-all shadow-md">
+            📊 Bekijk Mijn Volledige Dashboard →
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Wiskunde Card -->
+        <button type="button" onclick="selectSubject('wiskunde')" class="card-hover group relative overflow-hidden text-left p-7 rounded-[32px] border-2 border-indigo-200 bg-white hover:border-indigo-500 shadow-lg flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3.5 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs font-extrabold">Wiskunde Deel A</span>
+              <span class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center text-xl shadow-md">📐</span>
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors mb-2">Hoofdstuk 5 (2 vwo)</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">Haakjes wegwerken, korter schrijven en kwadratische vergelijkingen.</p>
+          </div>
+          <div class="mt-6 flex items-center gap-2 text-indigo-600 font-extrabold text-sm"><span>Start Wiskunde</span><span>→</span></div>
+        </button>
+
+        <!-- Spaans Card -->
+        <button type="button" onclick="selectSubject('spaans')" class="card-hover group relative overflow-hidden text-left p-7 rounded-[32px] border-2 border-amber-200 bg-white hover:border-amber-500 shadow-lg flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-extrabold">Spaans Trainer</span>
+              <span class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-xl shadow-md">🇪🇸</span>
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black text-slate-900 group-hover:text-amber-600 transition-colors mb-2">50 Werkwoorden</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">Oefen alle -AR, -ER en -IR werkwoorden in twee richtingen.</p>
+          </div>
+          <div class="mt-6 flex items-center gap-2 text-amber-600 font-extrabold text-sm"><span>Start Spaans</span><span>→</span></div>
+        </button>
+
+        <!-- Frans Card -->
+        <button type="button" onclick="selectSubject('frans')" class="card-hover group relative overflow-hidden text-left p-7 rounded-[32px] border-2 border-rose-200 bg-white hover:border-rose-500 shadow-lg flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3.5 py-1 rounded-full bg-rose-100 text-rose-800 text-xs font-extrabold">Frans Libre Service</span>
+              <span class="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 text-white flex items-center justify-center text-xl shadow-md">🇫🇷</span>
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black text-slate-900 group-hover:text-rose-600 transition-colors mb-2">Unité 2 (Sports et passions)</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">Oefen Apprendre 1 t/m 10: sportvocabulaire, zinnen en kloktijden.</p>
+          </div>
+          <div class="mt-6 flex items-center gap-2 text-rose-600 font-extrabold text-sm"><span>Start Frans</span><span>→</span></div>
+        </button>
+
+        <!-- Eigen Lijsten Card -->
+        <button type="button" onclick="selectSubject('eigen')" class="card-hover group relative overflow-hidden text-left p-7 rounded-[32px] border-2 border-emerald-200 bg-white hover:border-emerald-500 shadow-lg flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold">Eigen Woordenlijsten</span>
+              <span class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center text-xl shadow-md">✍️</span>
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors mb-2">Maak je eigen lijst</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">Plak je eigen proefwerk of woordenlijst en oefen direct met Enter!</p>
+          </div>
+          <div class="mt-6 flex items-center gap-2 text-emerald-600 font-extrabold text-sm"><span>Start Eigen Lijsten</span><span>→</span></div>
+        </button>
+      </div>
+    </section>
+
+    <!-- DASHBOARD / OVERZICHT PAGINA -->
+    <section id="dashboardView" class="hidden view-transition space-y-6">
+      <div class="glass-card rounded-[32px] border border-white p-6 sm:p-8 shadow-xl space-y-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-2xl shadow-md">📊</span>
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900">Jouw Prestaties & Overzicht</h2>
+              <p class="text-xs sm:text-sm text-slate-500">Alles wat je hebt geleerd en geoefend in Academie</p>
+            </div>
+          </div>
+          <button onclick="goToSubjectChoice()" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm">← Terug</button>
+        </div>
+
+        <!-- Level Voortgangskaart in Dashboard -->
+        <div class="p-6 rounded-3xl bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white shadow-lg space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span id="dashLevelTitle" class="text-xs font-bold uppercase tracking-wider text-purple-300">Jouw Huidige Level</span>
+              <h3 id="dashLevelName" class="text-2xl sm:text-3xl font-black">Level 1: Beginner</h3>
+            </div>
+            <div class="text-left sm:text-right">
+              <span id="dashLevelPointsInfo" class="text-sm font-bold text-indigo-200 math-font">0 / 500 pt</span>
+            </div>
+          </div>
+          <div class="w-full h-3.5 bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/15">
+            <div id="dashLevelBar" class="h-full bg-gradient-to-r from-purple-400 to-cyan-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+          <p id="dashLevelNextText" class="text-xs text-indigo-200/80">Verdien nog 500 punten om te stijgen naar Level 2!</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-5 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-100 border border-amber-200">
+            <span class="text-xs font-bold uppercase text-amber-800 block mb-1">Totaal Punten</span>
+            <span id="dashTotalPts" class="text-3xl font-black text-slate-900 math-font">0 pt</span>
+          </div>
+          <div class="p-5 rounded-3xl bg-gradient-to-br from-indigo-50 to-blue-100 border border-indigo-200">
+            <span class="text-xs font-bold uppercase text-indigo-800 block mb-1">Totaal Gemaakt</span>
+            <span id="dashTotalSolved" class="text-3xl font-black text-indigo-700 math-font">0 opdrachten</span>
+          </div>
+          <div class="p-5 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-100 border border-emerald-200">
+            <span class="text-xs font-bold uppercase text-emerald-800 block mb-1">Goede Antwoorden</span>
+            <span id="dashTotalCorrect" class="text-3xl font-black text-emerald-700 math-font">0</span>
+          </div>
+        </div>
+
+        <div class="space-y-4 pt-4 border-t border-slate-200">
+          <h3 class="text-base font-extrabold text-slate-900">Voortgang & Grafieken per vak 📈</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div class="flex justify-between items-center"><span class="text-sm font-extrabold text-indigo-900">📐 Wiskunde</span><span id="dashMathPct" class="text-xs font-bold text-indigo-600 math-font">0%</span></div>
+              <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden"><div id="dashMathBar" class="h-full bg-indigo-600 transition-all" style="width: 0%"></div></div>
+              <p id="dashMathStats" class="text-xs text-slate-600">Nog niets gemaakt.</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div class="flex justify-between items-center"><span class="text-sm font-extrabold text-amber-900">🇪🇸 Spaans</span><span id="dashSpPct" class="text-xs font-bold text-amber-600 math-font">0%</span></div>
+              <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden"><div id="dashSpBar" class="h-full bg-amber-500 transition-all" style="width: 0%"></div></div>
+              <p id="dashSpStats" class="text-xs text-slate-600">Nog niets gemaakt.</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div class="flex justify-between items-center"><span class="text-sm font-extrabold text-rose-900">🇫🇷 Frans</span><span id="dashFrPct" class="text-xs font-bold text-rose-600 math-font">0%</span></div>
+              <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden"><div id="dashFrBar" class="h-full bg-rose-500 transition-all" style="width: 0%"></div></div>
+              <p id="dashFrStats" class="text-xs text-slate-600">Nog niets gemaakt.</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div class="flex justify-between items-center"><span class="text-sm font-extrabold text-emerald-900">✍️ Eigen Lijsten</span><span id="dashEigenPct" class="text-xs font-bold text-emerald-600 math-font">0%</span></div>
+              <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden"><div id="dashEigenBar" class="h-full bg-emerald-500 transition-all" style="width: 0%"></div></div>
+              <p id="dashEigenStats" class="text-xs text-slate-600">Nog niets gemaakt.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3 pt-4 border-t border-slate-200">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-extrabold text-slate-900">Jouw opgeslagen eigen lijsten</h3>
+            <button onclick="selectSubject('eigen')" class="text-xs font-bold text-emerald-600 hover:underline">+ Nieuwe lijst maken</button>
+          </div>
+          <div id="dashSavedListsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 1: WISKUNDE ACADEMY -->
+    <div id="wiskundeAppView" class="hidden view-transition space-y-8">
+      <div class="flex items-center justify-between bg-white/80 p-5 rounded-3xl border border-slate-200">
+        <div class="flex items-center gap-3">
+          <span class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-lg">📐</span>
+          <div><h2 class="text-lg font-black text-slate-900">Wiskunde Academy · Hoofdstuk 5</h2><p class="text-xs text-slate-500">Moderne Wiskunde 2 vwo Deel A</p></div>
+        </div>
+        <button onclick="goToSubjectChoice()" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">← Vakkeuze</button>
+      </div>
+
+      <div class="glass-card rounded-[32px] border border-white p-6 sm:p-8 shadow-xl space-y-6">
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 mb-3">Kies je paragraaf</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5" id="mathSectionSelector">
+            <button type="button" data-sec="all" class="math-sec-btn p-3 rounded-2xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-extrabold text-xs text-center transition-all">🎲 Mix (Alles)</button>
+            <button type="button" data-sec="0" class="math-sec-btn p-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs text-center transition-all">5.0 Voorkennis</button>
+            <button type="button" data-sec="1" class="math-sec-btn p-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs text-center transition-all">5.1 Enkele haakjes</button>
+            <button type="button" data-sec="2" class="math-sec-btn p-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs text-center transition-all">5.2 Dubbele haakjes</button>
+            <button type="button" data-sec="3" class="math-sec-btn p-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs text-center transition-all">5.3 Korter schrijven</button>
+            <button type="button" data-sec="4" class="math-sec-btn p-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs text-center transition-all">5.4 Kwadraten & Top</button>
+            <button type="button" data-sec="5" class="math-sec-btn p-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs text-center sm:col-span-3 lg:col-span-6 transition-all">5.5 Kwadratische vergelijkingen oplossen</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-200">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Moeilijkheidsgraad</label>
+            <div class="grid grid-cols-3 gap-2" id="mathDiffGroup">
+              <button type="button" data-diff="easy" class="math-diff-btn py-2.5 rounded-xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs">Makkelijk</button>
+              <button type="button" data-diff="normal" class="math-diff-btn py-2.5 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-extrabold text-xs">Normaal</button>
+              <button type="button" data-diff="hard" class="math-diff-btn py-2.5 rounded-xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs">Uitdagend</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Aantal opdrachten</label>
+            <div class="grid grid-cols-3 gap-2" id="mathCountGroup">
+              <button type="button" data-count="5" class="math-count-btn py-2.5 rounded-xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs">5</button>
+              <button type="button" data-count="10" class="math-count-btn py-2.5 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-extrabold text-xs">10</button>
+              <button type="button" data-count="20" class="math-count-btn py-2.5 rounded-xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs">20</button>
+            </div>
+          </div>
+        </div>
+
+        <button id="startMathRoundBtn" type="button" class="w-full py-4 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-base shadow-xl transition-all">Start Wiskunde Ronde 🚀</button>
+      </div>
+
+      <!-- Wiskunde Active Oefen Kaart -->
+      <div id="mathTaskCardWrapper" class="hidden space-y-5">
+        <div class="glass-card rounded-[30px] border border-white p-4 sm:p-5 shadow-lg flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div><span class="text-[10px] font-extrabold uppercase text-slate-400 block">Ronde Punten</span><span id="mathHudPoints" class="text-2xl font-black text-slate-900 math-font">0</span></div>
+            <div><span class="text-[10px] font-extrabold uppercase text-slate-400 block">Reeks</span><span id="mathHudStreak" class="text-2xl font-black text-orange-600 math-font">0 🔥</span></div>
+          </div>
+          <div class="text-right"><span class="text-[10px] font-extrabold uppercase text-slate-400 block">Voortgang</span><span id="mathHudProgress" class="text-xl font-black text-indigo-600 math-font">1 / 10</span></div>
+        </div>
+
+        <div id="mathCardBox" class="glass-card rounded-[32px] border-2 border-white p-6 sm:p-8 shadow-xl space-y-6">
+          <div class="flex items-center justify-between">
+            <span id="mathTopicBadge" class="px-3.5 py-1.5 rounded-full bg-indigo-100 text-indigo-900 text-xs font-extrabold">5.1 Enkele haakjes</span>
+            <span id="mathPotentialPts" class="text-xs font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">+125 pt</span>
+          </div>
+
+          <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-[26px] p-6 sm:p-8 shadow-inner math-grid-pattern">
+            <p id="mathQuestionText" class="text-xl sm:text-3xl font-extrabold tracking-tight">Laden...</p>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-sm font-extrabold text-slate-800">Jouw antwoord:</label>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="insertMathSymbol('²')" class="px-3 py-1 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-black text-xs math-font border border-indigo-200">² (kwadraat)</button>
+                <button type="button" onclick="insertMathSymbol(' of ')" class="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs">of</button>
+              </div>
+            </div>
+
+            <div class="flex gap-3">
+              <input id="mathAnswerInput" type="text" placeholder="Typ je antwoord..." autocomplete="off" spellcheck="false"
+                class="flex-1 px-5 py-4 rounded-full border-2 border-slate-300 focus:border-indigo-600 outline-none text-base sm:text-lg math-font bg-white text-slate-900 shadow-2xs">
+              <button id="mathCheckBtn" type="button" class="px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-base shadow-lg">Controleer</button>
+            </div>
+          </div>
+
+          <div id="mathFeedbackBox" class="hidden p-4 rounded-3xl border text-sm sm:text-base leading-relaxed"></div>
+          <div id="mathHintBox" class="hidden p-4 rounded-3xl bg-amber-50 border border-amber-200 text-amber-950 text-sm"></div>
+
+          <div class="flex justify-between items-center pt-4 border-t border-slate-200">
+            <button id="mathHintBtn" type="button" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-amber-100 text-slate-700 font-bold text-sm">💡 Hint (-25 pt)</button>
+            <button id="mathNextBtn" type="button" disabled class="px-7 py-3 rounded-full bg-slate-900 hover:bg-indigo-950 disabled:opacity-40 text-white font-extrabold text-sm">Volgende →</button>
+          </div>
+        </div>
+
+        <div id="mathSummaryCard" class="hidden glass-card rounded-[34px] border border-white p-8 text-center space-y-6 shadow-2xl">
+          <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-4xl shadow-xl">🏆</div>
+          <h2 class="text-3xl font-black text-slate-900">Ronde voltooid!</h2>
+          <p id="mathSummaryText" class="text-slate-600">Geweldig gewerkt!</p>
+          <div class="flex justify-center gap-4">
+            <button onclick="startMathRound()" class="px-8 py-4 rounded-full bg-indigo-600 text-white font-extrabold shadow-lg">↻ Nog een ronde</button>
+            <button onclick="goToSubjectChoice()" class="px-8 py-4 rounded-full bg-slate-100 text-slate-800 font-bold">Vakkeuze</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 2: SPAANS WOORDJESTRAINER -->
+    <section id="spaansAppView" class="hidden view-transition space-y-6">
+      <div class="flex items-center justify-between bg-white/80 p-5 rounded-3xl border border-slate-200">
+        <div class="flex items-center gap-3">
+          <span class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-lg">🇪🇸</span>
+          <div><h2 class="text-lg font-black text-slate-900">Spaans Woordjestrainer</h2><p class="text-xs text-slate-500">50 Essentiële Werkwoorden</p></div>
+        </div>
+        <button onclick="goToSubjectChoice()" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">← Vakkeuze</button>
+      </div>
+
+      <div class="glass-card rounded-[32px] border border-white p-6 sm:p-8 shadow-xl space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Vertaalrichting</label>
+            <select id="spDirection" class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-900 font-bold text-sm outline-none focus:border-amber-500">
+              <option value="nl_es">Nederlands → Spaans (NL-SP)</option>
+              <option value="es_nl">Spaans → Nederlands (SP-NL)</option>
+              <option value="mix">Gemengd (Beide richtingen)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Categorie</label>
+            <select id="spRange" class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-900 font-bold text-sm outline-none focus:border-amber-500">
+              <option value="all">Alle 50 werkwoorden</option>
+              <option value="ar1">-AR Werkwoorden (1 t/m 15)</option>
+              <option value="ar2">-AR Werkwoorden (16 t/m 37)</option>
+              <option value="er">-ER Werkwoorden (38 t/m 46)</option>
+              <option value="ir">-IR Werkwoorden (47 t/m 50)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Aantal woorden</label>
+            <select id="spCount" class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-900 font-bold text-sm outline-none focus:border-amber-500">
+              <option value="10">10 woorden</option>
+              <option value="20" selected>20 woorden</option>
+              <option value="50">Alle 50 woorden</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button id="startSpaansBtn" type="button" class="py-4 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black text-base shadow-xl transition-all">Start Spaans Oefenen 🚀</button>
+          <button id="startSpSpeedrunBtn" type="button" onclick="startSpSpeedrun()" class="py-4 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-base shadow-xl transition-all">⚡ Spaans Speedrun (60 sec)</button>
+        </div>
+      </div>
+
+      <div id="spaansTaskCardWrapper" class="space-y-5">
+        <div id="spaansTaskCard" class="hidden glass-card rounded-[32px] border border-white p-6 sm:p-8 shadow-xl space-y-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span id="spTopicBadge" class="px-3.5 py-1.5 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold">NL → SP</span>
+              <span id="spProgressBadge" class="text-xs font-bold text-slate-500">Woord 1 van 20</span>
+            </div>
+            <span class="text-xs font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">Reeks: <strong id="spStreak" class="math-font">0</strong> 🔥</span>
+          </div>
+
+          <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900 text-white rounded-[26px] p-6 sm:p-8 shadow-inner flex items-center justify-between gap-4">
+            <p id="spQuestionText" class="text-xl sm:text-3xl font-extrabold tracking-tight">Laden...</p>
+            <button type="button" onclick="speakCurrentSp()" class="shrink-0 w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center text-xl shadow-lg transition-all" title="Luister uitspraak">🔊</button>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex gap-3">
+              <input id="spAnswerInput" type="text" placeholder="Typ de juiste vertaling..." autocomplete="off" spellcheck="false"
+                class="flex-1 px-5 py-4 rounded-full border-2 border-slate-300 focus:border-amber-500 outline-none text-base sm:text-lg bg-white text-slate-900 shadow-2xs">
+              <button id="spCheckBtn" type="button" class="px-8 py-4 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black text-base shadow-lg">Controleer</button>
+            </div>
+          </div>
+
+          <div id="spFeedbackBox" class="hidden p-4 rounded-3xl border text-sm sm:text-base"></div>
+          <div id="spHintBox" class="hidden p-4 rounded-3xl bg-amber-50 border border-amber-200 text-amber-950 text-sm"></div>
+
+          <div class="flex justify-between items-center pt-4 border-t border-slate-200">
+            <button id="spHintBtn" type="button" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-amber-100 text-slate-700 font-bold text-sm">💡 Hint (-5 pt)</button>
+            <button id="spNextBtn" type="button" disabled class="px-7 py-3 rounded-full bg-slate-900 hover:bg-indigo-950 disabled:opacity-40 text-white font-extrabold text-sm">Volgende →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: FRANS WOORDJESTRAINER -->
+    <section id="fransAppView" class="hidden view-transition space-y-6">
+      <div class="flex items-center justify-between bg-white/80 p-5 rounded-3xl border border-slate-200">
+        <div class="flex items-center gap-3">
+          <span class="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-black text-lg">🇫🇷</span>
+          <div><h2 class="text-lg font-black text-slate-900">Frans Libre Service · Unité 2</h2><p class="text-xs text-slate-500">Sports et passions (Apprendre 1 t/m 10)</p></div>
+        </div>
+        <button onclick="goToSubjectChoice()" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">← Vakkeuze</button>
+      </div>
+
+      <div class="glass-card rounded-[32px] border border-white p-6 sm:p-8 shadow-xl space-y-6">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">Kies oefenmodus voor Frans</h3>
+            <p class="text-xs text-slate-500">Oefen klassiek met invullen of direct met handige flashcards</p>
+          </div>
+          <button type="button" onclick="startFransFlashcards()" class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md">📇 Flashcard Modus</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Vertaalrichting</label>
+            <select id="frDirection" class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-900 font-bold text-sm outline-none focus:border-rose-500">
+              <option value="nl_fr">Nederlands → Frans (NL-FR)</option>
+              <option value="fr_nl">Frans → Nederlands (FR-NL)</option>
+              <option value="mix">Gemengd (Beide richtingen)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Apprendre Categorie</label>
+            <select id="frRange" class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-900 font-bold text-sm outline-none focus:border-rose-500">
+              <option value="all">Alle Apprendre 1 t/m 10</option>
+              <option value="a1">Apprendre 1 (Vocabulaire thématique)</option>
+              <option value="a2">Apprendre 2 (Lire vocabulaire)</option>
+              <option value="a5">Apprendre 5 (Zinnen & Phrases)</option>
+              <option value="a6">Apprendre 6 (Parler vocabulaire)</option>
+              <option value="a7">Apprendre 7 (Parler phrases)</option>
+              <option value="a8">Apprendre 8 (Écrire vocabulaire)</option>
+              <option value="a10">Apprendre 10 (Kloktijden)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Aantal woorden</label>
+            <select id="frCount" class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-900 font-bold text-sm outline-none focus:border-rose-500">
+              <option value="10">10 woorden</option>
+              <option value="20" selected>20 woorden</option>
+              <option value="40">40 woorden</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button id="startFransBtn" type="button" class="py-4 rounded-full bg-gradient-to-r from-rose-500 to-red-600 text-white font-black text-base shadow-xl transition-all">Start Frans Oefenen 🚀</button>
+          <button id="startFrSpeedrunBtn" type="button" onclick="startFrFransSpeedrun()" class="py-4 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-base shadow-xl transition-all">⚡ Frans Speedrun (60 sec)</button>
+        </div>
+      </div>
+
+      <!-- Actieve Flashcard Kaart voor Frans -->
+      <div id="fransFlashcardWrapper" class="hidden space-y-5">
+        <div class="glass-card rounded-[32px] border border-white p-6 sm:p-8 shadow-xl space-y-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="px-3.5 py-1.5 rounded-full bg-purple-100 text-purple-900 text-xs font-extrabold">📇 Frans Flashcards</span>
+              <span id="frFcProgressBadge" class="text-xs font-bold text-slate-500">Kaart 1 van 20</span>
+            </div>
+            <button onclick="backToFransManager()" class="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">← Instellingen</button>
+          </div>
+
+          <div onclick="flipFransFlashcard()" class="relative w-full h-64 sm:h-72 cursor-pointer group">
+            <div id="frFlashcardInner" class="w-full h-full duration-300 relative rounded-[28px] shadow-xl bg-gradient-to-br from-slate-900 via-rose-950 to-slate-900 text-white p-8 flex flex-col items-center justify-center text-center border-2 border-rose-500/40 hover:border-rose-400 transition-all">
+              <span id="frFcCardLabel" class="absolute top-4 left-4 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 text-xs font-extrabold uppercase tracking-wider">Vraag ❓</span>
+              <p id="frFcCardText" class="text-2xl sm:text-4xl font-black tracking-tight mt-4 px-4">Vraag</p>
+              <span id="frFcCardHintText" class="absolute bottom-4 text-xs text-rose-300/80 font-medium">👉 Klik ergens op de kaart om het antwoord te zien</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-4 pt-2">
+            <button onclick="frFcAnswerResult(false)" class="flex-1 py-3.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-extrabold text-sm transition-all">❌ Nog lastig</button>
+            <button onclick="frFcAnswerResult(true)" class="flex-1 py-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-extrabold text-sm transition-all">✅ Al geleerd!</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="fransTaskCardWrapper" class="space-y-5">
+        <div id="fransTaskCard" class="hidden glass-card rounded-[32px] border border-white p-6 sm:p-8 shadow-xl space-y-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span id="frTopicBadge" class="px-3.5 py-1.5 rounded-full bg-rose-100 text-rose-900 text-xs font-extrabold">NL → FR</span>
+              <span id="frProgressBadge" class="text-xs font-bold text-slate-500">Woord 1 van 20</span>
+            </div>
+            <span class="text-xs font-extrabold text-rose-800 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full">Reeks: <strong id="frStreak" class="math-font">0</strong> 🔥</span>
+          </div>
+
+          <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-rose-950 to-slate-900 text-white rounded-[26px] p-6 sm:p-8 shadow-inner flex items-center justify-between gap-4">
+            <p id="frQuestionText" class="text-xl sm:text-3xl font-extrabold tracking-tight">Laden...</p>
+            <button type="button" onclick="speakCurrentFr()" class="shrink-0 w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center text-xl shadow-lg transition-all" title="Luister uitspraak">🔊</button>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex gap-3">
+              <input id="frAnswerInput" type="text" placeholder="Typ de juiste vertaling..." autocomplete="off" spellcheck="false"
+                class="flex-1 px-5 py-4 rounded-full border-2 border-slate-300 focus:border-rose-500 outline-none text-base sm:text-lg bg-white text-slate-900 shadow-2xs">
+              <button id="frCheckBtn" type="button" class="px-8 py-4 rounded-full bg-gradient-to-r from-rose-500 to-red-600 text-white font-black text-base shadow-lg">Controleer</button>
+            </div>
+          </div>
+
+          <div id="frFeedbackBox" class="hidden p-4 rounded-3xl border text-sm sm:text-base"></div>
+          <div id="frHintBox" class="hidden p-4 rounded-3xl bg-rose-50 border border-rose-200 text-rose-950 text-sm"></div>
+
+          <div class="flex justify-between items-center pt-4 border-t border-slate-200">
+            <button id="frHintBtn" type="button" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-rose-100 text-slate-700 font-bold text-sm">💡 Hint (-5 pt)</button>
+            <button id="frNextBtn" type="button" disabled class="px-7 py-3 rounded-full bg-slate-900 hover:bg-indigo-950 disabled:opacity-40 text-white font-extrabold text-sm">Volgende →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: EIGEN WOORDENLIJSTEN -->
+    <section id="eigenAppView" class="hidden view-transition space-y-6">
+      <div class="flex items-center justify-between bg-white/80 p-5 rounded-3xl border border-slate-200">
+        <div class="flex items-center gap-3">
+          <span class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-lg">✍️</span>
+          <div><h2 class="text-lg font-black text-slate-900">Eigen Woordenlijsten</h2><p class="text-xs text-slate-500">Voeg je eigen proefwerken en woorden toe</p></div>
+        </div>
+        <button onclick="goToSubjectChoice()" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">← Vakkeuze</button>
+      </div>
+
+      <div id="eigenManageBox" class="glass-card rounded-[32px] border border-white p-6 sm:p-8 shadow-xl space-y-8">
+        <div class="space-y-4 bg-emerald-50/60 p-5 sm:p-6 rounded-3xl border border-emerald-200/80">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-lg font-black text-slate-900">🔍 Zoek woordenlijsten van anderen</h3>
+              <p class="text-xs text-slate-600">Zoek op vak, onderwerp of naam, of plak een deelcode van een klasgenoot</p>
+            </div>
+            <button type="button" onclick="toggleImportCodeBox()" class="self-start sm:self-auto px-3.5 py-2 rounded-full bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs shadow-2xs transition-all">📥 Deelcode plakken</button>
+          </div>
+
+          <div id="importCodeWrapper" class="hidden p-4 rounded-2xl bg-white border border-emerald-200 space-y-3">
+            <label class="block text-xs font-bold text-slate-700">Plak hier de deelcode die je van iemand hebt gekregen:</label>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input id="importShareCodeInput" type="text" placeholder="Plak code hier (bijv. ACAD-...)..." class="flex-1 px-4 py-2.5 rounded-xl border-2 border-slate-200 text-xs font-mono outline-none focus:border-emerald-500">
+              <button type="button" onclick="importSharedListCode()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">Toevoegen aan mijn lijsten</button>
+            </div>
+          </div>
+
+          <div class="relative">
+            <input id="searchOtherListsInput" type="text" oninput="renderCommunityLists()" placeholder="Zoek op vak of titel (bijv. Engels, Duits, Biologie, Geschiedenis)..."
+              class="w-full pl-10 pr-4 py-3 rounded-2xl border-2 border-emerald-200 bg-white text-slate-900 font-medium text-sm outline-none focus:border-emerald-500 shadow-2xs">
+            <span class="absolute left-3.5 top-3.5 text-slate-400 text-sm">🔎</span>
+          </div>
+
+          <div id="communityListsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1"></div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h3 class="text-lg font-black text-slate-900">📚 Jouw opgeslagen lijsten</h3>
+            <input id="searchOwnListsInput" type="text" oninput="renderSavedLists()" placeholder="Filter je eigen lijsten..."
+              class="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium outline-none focus:border-emerald-500">
+          </div>
+          <div id="savedListsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        </div>
+
+        <div class="pt-6 border-t border-slate-200 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 id="eigenFormTitle" class="text-lg font-black text-slate-900">✍️ Nieuwe woordenlijst maken</h3>
+            <button id="cancelEditEigenBtn" type="button" onclick="cancelEditCustomList()" class="hidden px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">✕ Annuleren</button>
+          </div>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-2">Naam van de lijst (bijv. Engels Unit 3)</label>
+              <input id="eigenListName" type="text" placeholder="Typ de naam van je proefwerk..." 
+                class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-900 font-bold text-sm outline-none focus:border-emerald-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-2">Woorden (één per regel in het formaat: <em>woord = vertaling</em> of <em>woord - vertaling</em>)</label>
+              <textarea id="eigenListText" rows="5" placeholder="school = de school&#10;book = het boek&#10;to learn = leren"
+                class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-900 font-medium text-sm outline-none focus:border-emerald-500 font-mono"></textarea>
+            </div>
+
+            <button id="saveEigenListBtn" type="button" class="w-full py-4 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-base shadow-xl transition-all">Lijst Opslaan 💾</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="eigenFlashcardWrapper" class="hidden space-y-5">
+        <div class="glass-card rounded-[32px] border border-white p-6 sm:p-8 shadow-xl space-y-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span id="fcTopicBadge" class="px-3.5 py-1.5 rounded-full bg-purple-100 text-purple-900 text-xs font-extrabold">📇 Flashcard Modus</span>
+              <span id="fcProgressBadge" class="text-xs font-bold text-slate-500">Kaart 1 van 10</span>
+            </div>
+            <button onclick="backToEigenManager()" class="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">← Lijsten</button>
+          </div>
+
+          <div onclick="flipFlashcard()" class="relative w-full h-64 sm:h-72 cursor-pointer group">
+            <div id="flashcardInner" class="w-full h-full duration-300 relative rounded-[28px] shadow-xl bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 text-white p-8 flex flex-col items-center justify-center text-center border-2 border-purple-500/40 hover:border-purple-400 transition-all">
+              <span id="fcCardLabel" class="absolute top-4 left-4 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-extrabold uppercase tracking-wider">Vraag ❓</span>
+              <p id="fcCardText" class="text-2xl sm:text-4xl font-black tracking-tight mt-4 px-4">Vraag</p>
+              <span id="fcCardHintText" class="absolute bottom-4 text-xs text-purple-300/80 font-medium">👉 Klik ergens op de kaart om het antwoord te zien</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-4 pt-2">
+            <button onclick="fcAnswerResult(false)" class="flex-1 py-3.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-extrabold text-sm transition-all">❌ Nog lastig</button>
+            <button onclick="fcAnswerResult(true)" class="flex-1 py-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-extrabold text-sm transition-all">✅ Al geleerd!</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="eigenTaskCardWrapper" class="hidden space-y-5">
+        <div class="glass-card rounded-[32px] border border-white p-6 sm:p-8 shadow-xl space-y-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span id="eigenTopicBadge" class="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-900 text-xs font-extrabold">Eigen Lijst</span>
+              <span id="eigenProgressBadge" class="text-xs font-bold text-slate-500">Woord 1 van 10</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">Reeks: <strong id="eigenStreak" class="math-font">0</strong> 🔥</span>
+              <button onclick="backToEigenManager()" class="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">← Lijsten</button>
+            </div>
+          </div>
+
+          <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 text-white rounded-[26px] p-6 sm:p-8 shadow-inner">
+            <p id="eigenQuestionText" class="text-xl sm:text-3xl font-extrabold tracking-tight">Laden...</p>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex gap-3">
+              <input id="eigenAnswerInput" type="text" placeholder="Typ de juiste vertaling..." autocomplete="off" spellcheck="false"
+                class="flex-1 px-5 py-4 rounded-full border-2 border-slate-300 focus:border-emerald-500 outline-none text-base sm:text-lg bg-white text-slate-900 shadow-2xs">
+              <button id="eigenCheckBtn" type="button" class="px-8 py-4 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-base shadow-lg">Controleer</button>
+            </div>
+          </div>
+
+          <div id="eigenFeedbackBox" class="hidden p-4 rounded-3xl border text-sm sm:text-base"></div>
+          <div id="eigenHintBox" class="hidden p-4 rounded-3xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-sm"></div>
+
+          <div class="flex justify-between items-center pt-4 border-t border-slate-200">
+            <button id="eigenHintBtn" type="button" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-emerald-100 text-slate-700 font-bold text-sm">💡 Hint (-5 pt)</button>
+            <button id="eigenNextBtn" type="button" disabled class="px-7 py-3 rounded-full bg-slate-900 hover:bg-indigo-950 disabled:opacity-40 text-white font-extrabold text-sm">Volgende →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="border-t border-slate-200/70 bg-white/70 backdrop-blur-md py-5 text-center text-xs text-slate-500">
+    Academie · Wiskunde, Spaans & Frans · Alles in één leeromgeving!
+  </footer>
+
+  <script>
+    const $=id=>document.getElementById(id);
+
+    // Globale statistieken en opslag (inclusief gebruikerslevels op basis van punten)
+    let stats = JSON.parse(localStorage.getItem('academie_stats_v6') || JSON.stringify({
+      totalPoints: 0,
+      mathAttempted: 0, mathCorrect: 0,
+      spAttempted: 0, spCorrect: 0,
+      frAttempted: 0, frCorrect: 0,
+      eigenAttempted: 0, eigenCorrect: 0
+    }));
+
+    // Functie om op basis van punten uit te rekenen welk level de gebruiker heeft (elke 500 punten = 1 level)
+    function getUserLevelInfo(points) {
+      let level = Math.floor(points / 500) + 1;
+      let pointsInCurrentLevel = points % 500;
+      let pointsNeededForNext = 500;
+      let pct = Math.min(100, Math.round((pointsInCurrentLevel / pointsNeededForNext) * 100));
+
+      let title = "Beginner";
+      if (level >= 10) title = "Academie Legende 👑";
+      else if (level >= 7) title = "Expert Grote Meester ⚡";
+      else if (level >= 5) title = "Gevorderde Strijder 🔥";
+      else if (level >= 3) title = "Fanatieke Leerling 📚";
+
+      return {
+        level: level,
+        title: `Level ${level}: ${title}`,
+        currentInLevel: pointsInCurrentLevel,
+        needed: pointsNeededForNext,
+        pct: pct
+      };
+    }
+
+    function saveStats() {
+      localStorage.setItem('academie_stats_v6', JSON.stringify(stats));
+      $('navTotalPoints').textContent = stats.totalPoints + ' pt';
+
+      let info = getUserLevelInfo(stats.totalPoints);
+      if ($('navUserLevel')) {
+        $('navUserLevel').textContent = `Level ${info.level}`;
+      }
+    }
+    saveStats();
+
+    function triggerConfetti(originEl) {
+      const rect = originEl.getBoundingClientRect();
+      const ox = rect.left + rect.width / 2;
+      const oy = rect.top + rect.height / 2;
+      const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#e11d48'];
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement('span');
+        p.className = 'confetti-particle';
+        p.textContent = ['★', '●', '✦'][i % 3];
+        p.style.left = ox + 'px';
+        p.style.top = oy + 'px';
+        p.style.color = colors[i % colors.length];
+        p.style.fontSize = (12 + Math.random() * 10) + 'px';
+
+        const angle = (Math.PI * 2 * i) / 20;
+        const dist = 50 + Math.random() * 100;
+        p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+        p.style.setProperty('--ty', (Math.sin(angle) * dist - 30) + 'px');
+        p.style.setProperty('--rot', (Math.random() * 360) + 'deg');
+
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 900);
+      }
+    }
+
+    function animateCard(cardEl, type) {
+      cardEl.classList.remove('animate-correct-card', 'animate-wrong-card');
+      void cardEl.offsetWidth;
+      cardEl.classList.add(type === 'correct' ? 'animate-correct-card' : 'animate-wrong-card');
+    }
+
+    function goToSubjectChoice() {
+      $('subjectChoiceView').classList.remove('hidden');
+      $('dashboardView').classList.add('hidden');
+      $('wiskundeAppView').classList.add('hidden');
+      $('spaansAppView').classList.add('hidden');
+      $('fransAppView').classList.add('hidden');
+      $('eigenAppView').classList.add('hidden');
+      $('backToHomeBtn').classList.add('hidden');
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function selectSubject(sub) {
+      $('subjectChoiceView').classList.add('hidden');
+      $('dashboardView').classList.add('hidden');
+      $('backToHomeBtn').classList.remove('hidden');
+      if(sub==='wiskunde') $('wiskundeAppView').classList.remove('hidden');
+      else if(sub==='spaans') $('spaansAppView').classList.remove('hidden');
+      else if(sub==='frans') $('fransAppView').classList.remove('hidden');
+      else if(sub==='eigen') {
+        $('eigenAppView').classList.remove('hidden');
+        $('eigenManageBox').classList.remove('hidden');
+        $('eigenTaskCardWrapper').classList.add('hidden');
+        renderSavedLists();
+        renderCommunityLists();
+      }
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function openDashboard() {
+      $('subjectChoiceView').classList.add('hidden');
+      $('wiskundeAppView').classList.add('hidden');
+      $('spaansAppView').classList.add('hidden');
+      $('fransAppView').classList.add('hidden');
+      $('eigenAppView').classList.add('hidden');
+      $('dashboardView').classList.remove('hidden');
+      $('backToHomeBtn').classList.remove('hidden');
+
+      const lvlInfo = getUserLevelInfo(stats.totalPoints);
+      $('dashLevelName').textContent = lvlInfo.title;
+      $('dashLevelPointsInfo').textContent = `${lvlInfo.currentInLevel} / ${lvlInfo.needed} pt in dit level`;
+      $('dashLevelBar').style.width = lvlInfo.pct + '%';
+      $('dashLevelNextText').textContent = `Nog ${lvlInfo.needed - lvlInfo.currentInLevel} punten tot het volgende level!`;
+
+      const eigAtt = stats.eigenAttempted || 0;
+      const eigCor = stats.eigenCorrect || 0;
+      $('dashTotalPts').textContent = stats.totalPoints + ' pt';
+      $('dashTotalSolved').textContent = (stats.mathAttempted + stats.spAttempted + stats.frAttempted + eigAtt) + ' totaal';
+      $('dashTotalCorrect').textContent = (stats.mathCorrect + stats.spCorrect + stats.frCorrect + eigCor);
+
+      const mathPct = stats.mathAttempted > 0 ? Math.round((stats.mathCorrect / stats.mathAttempted) * 100) : 0;
+      const spPct = stats.spAttempted > 0 ? Math.round((stats.spCorrect / stats.spAttempted) * 100) : 0;
+      const frPct = stats.frAttempted > 0 ? Math.round((stats.frCorrect / stats.frAttempted) * 100) : 0;
+      const eigenPct = eigAtt > 0 ? Math.round((eigCor / eigAtt) * 100) : 0;
+
+      $('dashMathPct').textContent = mathPct + '%';
+      $('dashMathBar').style.width = mathPct + '%';
+      $('dashMathStats').textContent = `Gemaakt: ${stats.mathAttempted} | Goed: ${stats.mathCorrect}`;
+
+      $('dashSpPct').textContent = spPct + '%';
+      $('dashSpBar').style.width = spPct + '%';
+      $('dashSpStats').textContent = `Gemaakt: ${stats.spAttempted} | Goed: ${stats.spCorrect}`;
+
+      $('dashFrPct').textContent = frPct + '%';
+      $('dashFrBar').style.width = frPct + '%';
+      $('dashFrStats').textContent = `Gemaakt: ${stats.frAttempted} | Goed: ${stats.frCorrect}`;
+
+      $('dashEigenPct').textContent = eigenPct + '%';
+      $('dashEigenBar').style.width = eigenPct + '%';
+      $('dashEigenStats').textContent = `Gemaakt: ${eigAtt} | Goed: ${eigCor}`;
+
+      const dashListsCont = $('dashSavedListsContainer');
+      if (dashListsCont) {
+        if (customLists.length === 0) {
+          dashListsCont.innerHTML = '<p class="text-xs text-slate-500 italic col-span-3">Nog geen eigen woordenlijsten aangemaakt.</p>';
+        } else {
+          dashListsCont.innerHTML = customLists.map((list, idx) => `
+            <div class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 flex items-center justify-between gap-2">
+              <div>
+                <span class="text-xs font-black text-slate-900 block">${list.name}</span>
+                <span class="text-[11px] text-slate-600">${list.pairs.length} woorden</span>
+              </div>
+              <button onclick="selectSubject('eigen'); startCustomList(${idx});" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">Oefen</button>
+            </div>
+          `).join('');
+        }
+      }
+
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    // ==========================================
+    // WISKUNDE LOGICA
+    // ==========================================
+    let mathSec = 'all', mathDiff = 'normal', mathCount = 10;
+    let mathTasks = [], mathPos = 0, mathPoints = 0, mathStreak = 0, mathCorrect = 0, mathAnswered = false, mathCurrent = null, mathHintUsed = false;
+
+    document.querySelectorAll('.math-sec-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.math-sec-btn').forEach(b => b.className = 'math-sec-btn p-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs text-center transition-all');
+        btn.className = 'math-sec-btn p-3 rounded-2xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-extrabold text-xs text-center transition-all';
+        mathSec = btn.dataset.sec;
+      });
+    });
+
+    document.querySelectorAll('.math-diff-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.math-diff-btn').forEach(b => b.className = 'math-diff-btn py-2.5 rounded-xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs');
+        btn.className = 'math-diff-btn py-2.5 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-extrabold text-xs';
+        mathDiff = btn.dataset.diff;
+      });
+    });
+
+    document.querySelectorAll('.math-count-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.math-count-btn').forEach(b => b.className = 'math-count-btn py-2.5 rounded-xl border-2 border-slate-200 bg-white text-slate-700 font-bold text-xs');
+        btn.className = 'math-count-btn py-2.5 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-extrabold text-xs';
+        mathCount = Number(btn.dataset.count);
+      });
+    });
+
+    const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+    const pick = a => a[rnd(0, a.length - 1)];
+
+    function generateMathTask(secKey, diff) {
+      let s = secKey === 'all' ? rnd(0, 5) : Number(secKey);
+      let level = diff;
+      let L = { easy: 'Makkelijk', normal: 'Normaal', hard: 'Uitdagend' }[level];
+      const n = () => rnd(level === 'easy' ? 1 : 2, level === 'easy' ? 6 : 10);
+      let a = n(), b = n(), c = n();
+
+      if (s === 0) {
+        return { topic: '5.0 Voorkennis', levelLabel: L, q: `Bereken: ${a} × (${b} + ${c})`, answers: [a * (b + c)], hint: `Reken eerst uit wat tussen haakjes staat.`, solution: `${a} × ${b + c} = ${a * (b + c)}` };
+      } else if (s === 1) {
+        a = pick([-5, -3, 2, 3, 4]); b = rnd(-8, 8); if (b === 0) b = 3;
+        let ansStr = `${a}x${a * b < 0 ? '-' + -(a * b) : '+' + (a * b)}`;
+        return { topic: '5.1 Enkele haakjes', levelLabel: L, q: `Werk uit: ${a}(x ${b < 0 ? '− ' + -b : '+ ' + b})`, answers: [ansStr], hint: `Vermenigvuldig ${a} met x en met ${b}.`, solution: ansStr };
+      } else if (s === 2) {
+        a = pick([-3, 2, 3]); b = pick([-4, 2, 3]);
+        let ansStr = `x^2${a + b < 0 ? '-' + -(a + b) + 'x' : '+' + (a + b) + 'x'}${a * b < 0 ? '-' + -(a * b) : '+' + (a * b)}`;
+        return { topic: '5.2 Dubbele haakjes', levelLabel: L, q: `Werk uit: (x ${a < 0 ? '− ' + -a : '+ ' + a})(x ${b < 0 ? '− ' + -b : '+ ' + b})`, answers: [ansStr], hint: `Gebruik de papegaaienbekmethode.`, solution: ansStr };
+      } else if (s === 3) {
+        a = rnd(2, 4); b = rnd(1, 5); c = rnd(1, 4); d = rnd(1, 5);
+        let A = a + c, B = a * b - c * d;
+        let ansStr = `${A}x${B === 0 ? '' : (B < 0 ? '-' + -B : '+' + B)}`;
+        return { topic: '5.3 Korter schrijven', levelLabel: L, q: `Vereenvoudig: ${a}(x + ${b}) + ${c}(x − ${d})`, answers: [ansStr], hint: `Werk beide haakjes uit.`, solution: ansStr };
+      } else if (s === 4) {
+        let x = pick([-2, -1, 1, 2, 3]);
+        let val = a * x * x + b * x + c;
+        return { topic: '5.4 Kwadratische formules', levelLabel: L, q: `Bereken y bij y = ${a}x² + ${b}x + ${c}, als x = ${x}.`, answers: [val], hint: `Vul ${x} in voor x.`, solution: `${val}` };
+      } else {
+        a = rnd(2, 9);
+        return { topic: '5.5 Vergelijkingen', levelLabel: L, q: `Los op: x² = ${a * a}`, answers: [`${a} of -${a}`, `x=${a} of x=-${a}`], hint: `Neem de positieve en negatieve wortel.`, solution: `x = ${a} of x = -${a}`, isDual: true, roots: [a, -a] };
+      }
+    }
+
+    function normMath(s) { return String(s).toLowerCase().replace(/[−–—]/g, '-').replace(/\s+/g, '').replace(/\^2/g, '²').replace(/,/g, '.'); }
+
+    function startMathRound() {
+      mathTasks = Array.from({ length: mathCount }, () => generateMathTask(mathSec, mathDiff));
+      mathPos = 0; mathPoints = 0; mathStreak = 0; mathCorrect = 0;
+      $('mathSummaryCard').classList.add('hidden');
+      $('mathTaskCardWrapper').classList.remove('hidden');
+      renderMathTask();
+    }
+
+    function renderMathTask() {
+      mathCurrent = mathTasks[mathPos];
+      mathAnswered = false;
+      mathHintUsed = false;
+      $('mathTopicBadge').textContent = mathCurrent.topic;
+      $('mathQuestionText').innerHTML = mathCurrent.q;
+      $('mathAnswerInput').value = '';
+      $('mathAnswerInput').disabled = false;
+      $('mathAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-slate-300 focus:border-indigo-600 outline-none text-base sm:text-lg math-font bg-white text-slate-900 shadow-2xs';
+      $('mathFeedbackBox').classList.add('hidden');
+      $('mathHintBox').classList.add('hidden');
+      $('mathCheckBtn').disabled = false;
+      $('mathNextBtn').disabled = true;
+      $('mathHudPoints').textContent = mathPoints;
+      $('mathHudStreak').textContent = mathStreak + ' 🔥';
+      $('mathHudProgress').textContent = `${mathPos + 1} / ${mathTasks.length}`;
+      $('mathAnswerInput').focus();
+    }
+
+    function insertMathSymbol(sym) {
+      const inp = $('mathAnswerInput');
+      if(inp.disabled) return;
+      inp.value += sym;
+      inp.focus();
+    }
+
+    $('startMathRoundBtn').addEventListener('click', startMathRound);
+
+    $('mathCheckBtn').addEventListener('click', () => {
+      if(!mathCurrent || mathAnswered) return;
+      let given = $('mathAnswerInput').value.trim();
+      if(!normMath(given)) return;
+
+      mathAnswered = true;
+      let cleanGiven = normMath(given);
+      let ok = mathCurrent.answers.some(ans => normMath(ans) === cleanGiven);
+      if(!ok && mathCurrent.isDual && cleanGiven.includes(String(mathCurrent.roots[0])) && cleanGiven.includes(String(mathCurrent.roots[1]))) ok = true;
+
+      stats.mathAttempted++;
+      if(ok) {
+        mathCorrect++; mathStreak++; stats.mathCorrect++;
+        let earned = 100 + (mathStreak >= 3 ? 25 : 0) - (mathHintUsed ? 25 : 0);
+        mathPoints += earned; stats.totalPoints += earned; saveStats();
+
+        animateCard($('mathCardBox'), 'correct');
+        triggerConfetti($('mathCheckBtn'));
+
+        $('mathAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-emerald-500 bg-emerald-50/30 outline-none text-base sm:text-lg math-font font-bold text-emerald-900';
+        $('mathFeedbackBox').className = 'p-4 rounded-3xl border bg-emerald-50 border-emerald-200 text-emerald-950 text-sm sm:text-base';
+        $('mathFeedbackBox').innerHTML = `🎉 Helemaal goed! (+${earned} pt)<br><strong>Uitwerking:</strong> <span class="math-font">${mathCurrent.solution}</span>`;
+        $('mathFeedbackBox').classList.remove('hidden');
+      } else {
+        mathStreak = 0; saveStats();
+        animateCard($('mathCardBox'), 'wrong');
+
+        $('mathAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-rose-500 bg-rose-50/30 outline-none text-base sm:text-lg math-font font-bold text-rose-900';
+        $('mathFeedbackBox').className = 'p-4 rounded-3xl border bg-rose-50 border-rose-200 text-rose-950 text-sm sm:text-base';
+        $('mathFeedbackBox').innerHTML = `❌ Helaas. Juiste uitwerking: <span class="math-font">${mathCurrent.solution}</span>`;
+        $('mathFeedbackBox').classList.remove('hidden');
+      }
+
+      $('mathCheckBtn').disabled = true;
+      $('mathAnswerInput').disabled = true;
+      $('mathNextBtn').disabled = false;
+      $('mathHudPoints').textContent = mathPoints;
+      $('mathHudStreak').textContent = mathStreak + ' 🔥';
+    });
+
+    $('mathHintBtn').addEventListener('click', () => {
+      if(!mathCurrent) return;
+      mathHintUsed = true;
+      $('mathHintBox').textContent = '💡 Hint: ' + mathCurrent.hint;
+      $('mathHintBox').classList.remove('hidden');
+    });
+
+    $('mathNextBtn').addEventListener('click', () => {
+      if(mathPos < mathTasks.length - 1) { mathPos++; renderMathTask(); }
+      else {
+        $('mathTaskCardWrapper').classList.add('hidden');
+        $('mathSummaryCard').classList.remove('hidden');
+        $('mathSummaryText').textContent = `Je hebt ${mathCorrect} van de ${mathTasks.length} opdrachten goed en ${mathPoints} punten verdiend!`;
+      }
+    });
+
+
+    // ==========================================
+    // SPAANS LOGICA
+    // ==========================================
+    const spanishList = [
+      {es:"estudiar", nl:["studeren"]}, {es:"llorar", nl:["huilen"]}, {es:"hablar", nl:["praten"]},
+      {es:"viajar", nl:["reizen"]}, {es:"empujar", nl:["duwen"]}, {es:"entrar", nl:["binnenkomen"]},
+      {es:"tirar", nl:["trekken", "werpen"]}, {es:"saltar", nl:["springen"]}, {es:"arreglar", nl:["regelen"]},
+      {es:"ayudar", nl:["helpen"]}, {es:"escalar", nl:["klimmen"]}, {es:"dibujar", nl:["tekenen"]},
+      {es:"comprar", nl:["kopen"]}, {es:"cantar", nl:["zingen"]}, {es:"esperar", nl:["wachten"]},
+      {es:"bailar", nl:["dansen"]}, {es:"cocinar", nl:["koken"]}, {es:"cortar", nl:["snijden"]},
+      {es:"pagar", nl:["betalen"]}, {es:"escuchar", nl:["luisteren"]}, {es:"caminar", nl:["lopen"]},
+      {es:"buscar", nl:["zoeken"]}, {es:"tocar", nl:["aanraken"]}, {es:"mirar", nl:["kijken"]},
+      {es:"cruzar", nl:["oversteken"]}, {es:"borrar", nl:["wissen"]}, {es:"colorear", nl:["kleuren"]},
+      {es:"pintar", nl:["verven"]}, {es:"observar", nl:["observeren"]}, {es:"patinar", nl:["schaatsen", "skaten"]},
+      {es:"lanzar", nl:["gooien"]}, {es:"nadar", nl:["zwemmen"]}, {es:"cabalgar", nl:["paardrijden"]},
+      {es:"preguntar", nl:["vragen"]}, {es:"apagar", nl:["uitdoen", "uitschakelen"]}, {es:"esquiar", nl:["skiën"]},
+      {es:"soplar", nl:["blazen"]}, {es:"romper", nl:["breken", "slopen"]}, {es:"comer", nl:["eten"]},
+      {es:"leer", nl:["lezen"]}, {es:"correr", nl:["rennen"]}, {es:"vender", nl:["verkopen"]},
+      {es:"beber", nl:["drinken"]}, {es:"coger", nl:["pakken"]}, {es:"responder", nl:["antwoorden"]},
+      {es:"recoger", nl:["oppakken"]}, {es:"vivir", nl:["leven"]}, {es:"escribir", nl:["schrijven"]},
+      {es:"recibir", nl:["ontvangen"]}, {es:"abrir", nl:["openen"]}
+    ];
+
+    let spTasks=[], spPos=0, spScore=0, spStreak=0, spAnswered=false, spCurrent=null;
+
+    $('startSpaansBtn').addEventListener('click', () => {
+      const dir = $('spDirection').value;
+      const range = $('spRange').value;
+      const count = Number($('spCount').value);
+
+      let subset = spanishList;
+      if(range==='ar1') subset = spanishList.slice(0, 15);
+      else if(range==='ar2') subset = spanishList.slice(15, 37);
+      else if(range==='er') subset = spanishList.slice(37, 46);
+      else if(range==='ir') subset = spanishList.slice(46, 50);
+
+      spTasks = [];
+      for(let i=0; i<count; i++){
+        let w = subset[Math.floor(Math.random()*subset.length)];
+        let mode = dir;
+        if(mode==='mix') mode = Math.random()>0.5 ? 'nl_es' : 'es_nl';
+
+        if(mode==='nl_es'){
+          spTasks.push({ topic: 'Nederlands → Spaans', q: `Wat is het Spaanse werkwoord voor: <strong>${w.nl[0]}</strong>?`, accepted: [w.es], hint: `Begint met "${w.es[0].toUpperCase()}"...`, solution: `${w.nl[0]} = ${w.es}` });
+        } else {
+          spTasks.push({ topic: 'Spaans → Nederlands', q: `Wat is de Nederlandse vertaling van: <strong>${w.es}</strong>?`, accepted: w.nl, hint: `Begint met "${w.nl[0][0].toUpperCase()}"...`, solution: `${w.es} = ${w.nl[0]}` });
+        }
+      }
+
+      spPos=0; spScore=0; spStreak=0;
+      $('spaansTaskCard').classList.remove('hidden');
+      renderSpaansTask();
+    });
+
+    function renderSpaansTask() {
+      spCurrent = spTasks[spPos];
+      spAnswered = false;
+      $('spProgressBadge').textContent = `Woord ${spPos+1} van ${spTasks.length}`;
+      $('spTopicBadge').textContent = spCurrent.topic;
+      $('spQuestionText').innerHTML = spCurrent.q;
+      $('spAnswerInput').value = '';
+      $('spAnswerInput').disabled = false;
+      $('spAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-slate-300 focus:border-amber-500 outline-none text-base sm:text-lg bg-white text-slate-900 shadow-2xs';
+      $('spFeedbackBox').className = 'hidden p-4 rounded-3xl border text-sm sm:text-base';
+      $('spHintBox').classList.add('hidden');
+      $('spCheckBtn').disabled = false;
+      $('spNextBtn').disabled = true;
+      $('spAnswerInput').focus();
+    }
+
+    $('spCheckBtn').addEventListener('click', () => {
+      if(!spCurrent || spAnswered) return;
+      let given = $('spAnswerInput').value.trim().toLowerCase().replace(/[^a-zà-ÿäëïöüáéíóúñ]/g,'');
+      if(!given) return;
+
+      spAnswered = true;
+      let ok = spCurrent.accepted.some(acc => acc.toLowerCase().replace(/[^a-zà-ÿäëïöüáéíóúñ]/g,'') === given);
+
+      stats.spAttempted++;
+      if(ok){
+        spScore++; spStreak++; stats.spCorrect++; stats.totalPoints += 50; saveStats();
+        if(typeof speedrunActive !== 'undefined' && speedrunActive) {
+          speedrunCorrectCount++;
+          spPos++; renderSpaansTask();
+          return;
+        }
+        animateCard($('spaansTaskCard'), 'correct');
+        triggerConfetti($('spCheckBtn'));
+
+        $('spStreak').textContent = spStreak;
+        $('spAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-emerald-500 bg-emerald-50/30 outline-none text-base sm:text-lg font-bold text-emerald-900';
+        $('spFeedbackBox').className = 'p-4 rounded-3xl border bg-emerald-50 border-emerald-200 text-emerald-950 text-sm sm:text-base';
+        $('spFeedbackBox').innerHTML = `🎉 Helemaal goed! Juiste vertaling: <strong>${spCurrent.solution}</strong>`;
+        $('spFeedbackBox').classList.remove('hidden');
+      } else {
+        spStreak = 0; saveStats();
+        animateCard($('spaansTaskCard'), 'wrong');
+
+        $('spStreak').textContent = spStreak;
+        $('spAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-rose-500 bg-rose-50/30 outline-none text-base sm:text-lg font-bold text-rose-900';
+        $('spFeedbackBox').className = 'p-4 rounded-3xl border bg-rose-50 border-rose-200 text-rose-950 text-sm sm:text-base';
+        $('spFeedbackBox').innerHTML = `❌ Helaas, de juiste vertaling is: <strong>${spCurrent.solution}</strong>`;
+        $('spFeedbackBox').classList.remove('hidden');
+      }
+
+      $('spCheckBtn').disabled = true;
+      $('spAnswerInput').disabled = true;
+      $('spNextBtn').disabled = false;
+    });
+
+    $('spHintBtn').addEventListener('click', () => {
+      if(!spCurrent) return;
+      $('spHintBox').textContent = '💡 Hint: ' + spCurrent.hint;
+      $('spHintBox').classList.remove('hidden');
+    });
+
+    $('spNextBtn').addEventListener('click', () => {
+      if(spPos < spTasks.length - 1){ spPos++; renderSpaansTask(); }
+      else {
+        $('spQuestionText').textContent = `🏆 Geweldig gedaan! Je hebt ${spScore} van de ${spTasks.length} woorden goed!`;
+        $('spFeedbackBox').className = 'p-4 rounded-3xl border bg-amber-50 border-amber-200 text-amber-950 font-bold';
+        $('spFeedbackBox').textContent = 'Start een nieuwe ronde om verder te oefenen.';
+        $('spFeedbackBox').classList.remove('hidden');
+        $('spNextBtn').disabled = true;
+      }
+    });
+
+
+    // ==========================================
+    // FRANS LOGICA
+    // ==========================================
+    const frenchList = [
+      {cat: 'a1', fr: "l'équipe (f)", nl: ["het team"]}, {cat: 'a1', fr: "le match", nl: ["de wedstrijd"]},
+      {cat: 'a1', fr: "la victoire", nl: ["de overwinning"]}, {cat: 'a1', fr: "le maillot de bain", nl: ["het badpak"]},
+      {cat: 'a1', fr: "le stade", nl: ["het stadion"]}, {cat: 'a1', fr: "la balle", nl: ["de tennisbal", "bal"]},
+      {cat: 'a1', fr: "le ballon", nl: ["de voetbals", "bal"]}, {cat: 'a1', fr: "l'arbitre", nl: ["de scheidsrechter"]},
+      {cat: 'a1', fr: "se balader", nl: ["wandelen"]}, {cat: 'a1', fr: "battre", nl: ["verslaan"]},
+      {cat: 'a1', fr: "la finale", nl: ["de finale"]}, {cat: 'a1', fr: "l'entraîneur", nl: ["de trainer"]},
+      {cat: 'a1', fr: "le jeu de société", nl: ["het gezelschapsspel"]}, {cat: 'a1', fr: "les loisirs", nl: ["de vrijetijdsbesteding"]},
+      {cat: 'a1', fr: "bricoler", nl: ["knutselen"]}, {cat: 'a1', fr: "la passion", nl: ["de passie"]},
+      {cat: 'a1', fr: "créatif", nl: ["creatief"]}, {cat: 'a1', fr: "la gymnastique", nl: ["de gymnastiek"]},
+      {cat: 'a1', fr: "courir", nl: ["rennen"]}, {cat: 'a1', fr: "sauter", nl: ["springen"]},
+      {cat: 'a1', fr: "lancer", nl: ["gooien"]}, {cat: 'a1', fr: "la jambe", nl: ["het been"]},
+      {cat: 'a1', fr: "le bras", nl: ["de arm"]}, {cat: 'a1', fr: "le pied", nl: ["de voet"]},
+      
+      {cat: 'a2', fr: "vers", nl: ["ongeveer"]}, {cat: 'a2', fr: "l'arbre", nl: ["de boom"]},
+      {cat: 'a2', fr: "le mouvement", nl: ["de beweging"]}, {cat: 'a2', fr: "l'amitié", nl: ["de vriendschap"]},
+      {cat: 'a2', fr: "s'entraîner", nl: ["trainen"]}, {cat: 'a2', fr: "sembler", nl: ["lijken"]},
+      {cat: 'a2', fr: "ici", nl: ["hier"]}, {cat: 'a2', fr: "la façon", nl: ["de manier"]},
+      {cat: 'a2', fr: "se déplacer", nl: ["zich verplaatsen"]}, {cat: 'a2', fr: "la compétition", nl: ["de competitie"]},
+      {cat: 'a2', fr: "l'équipement", nl: ["de uitrusting"]}, {cat: 'a2', fr: "l'échauffement", nl: ["de warming-up"]},
+      {cat: 'a2', fr: "avant", nl: ["voordat", "vroeger"]}, {cat: 'a2', fr: "la pratique", nl: ["het oefenen"]},
+      {cat: 'a2', fr: "le risque", nl: ["het risico"]}, {cat: 'a2', fr: "si", nl: ["als", "indien"]},
+      {cat: 'a2', fr: "la prudence", nl: ["de voorzichtigheid"]}, {cat: 'a2', fr: "la règle", nl: ["de regel"]},
+      {cat: 'a2', fr: "indispensable", nl: ["onmisbaar"]}, {cat: 'a2', fr: "s'éclater", nl: ["uit zijn dak gaan"]},
+      {cat: 'a2', fr: "maîtriser", nl: ["beheersen"]}, {cat: 'a2', fr: "le corps", nl: ["het lichaam"]},
+
+      {cat: 'a6', fr: "faux", nl: ["verkeerd"]}, {cat: 'a6', fr: "la démonstration", nl: ["de demonstratie"]},
+      {cat: 'a6', fr: "en tout cas", nl: ["in ieder geval"]}, {cat: 'a6', fr: "arrêter", nl: ["stoppen"]},
+      {cat: 'a6', fr: "tiens", nl: ["hé"]}, {cat: 'a6', fr: "le violoncelle", nl: ["de cello"]},
+      {cat: 'a6', fr: "assez", nl: ["nogal"]}, {cat: 'a6', fr: "comique", nl: ["komisch"]},
+      {cat: 'a6', fr: "bizarre", nl: ["vreemd"]}, {cat: 'a6', fr: "original", nl: ["origineel"]},
+      {cat: 'a6', fr: "en effet", nl: ["inderdaad"]}, {cat: 'a6', fr: "durer", nl: ["duren"]},
+      {cat: 'a6', fr: "entendu", nl: ["afgesproken"]},
+
+      {cat: 'a8', fr: "l'annonce", nl: ["de advertentie"]}, {cat: 'a8', fr: "quelqu'un", nl: ["iemand"]},
+      {cat: 'a8', fr: "placer", nl: ["plaatsen"]}, {cat: 'a8', fr: "gourmand", nl: ["lekkerbek"]},
+      {cat: 'a8', fr: "la recette", nl: ["het recept"]}, {cat: 'a8', fr: "passionné", nl: ["bevlogen"]},
+      {cat: 'a8', fr: "échanger", nl: ["uitwisselen"]}, {cat: 'a8', fr: "découvrir", nl: ["ontdekken"]},
+      {cat: 'a8', fr: "la flute", nl: ["de fluit"]}, {cat: 'a8', fr: "rechercher", nl: ["zoeken"]},
+      {cat: 'a8', fr: "l'ado", nl: ["de jongere"]}, {cat: 'a8', fr: "bienvenu", nl: ["welkom"]},
+      {cat: 'a8', fr: "neuf", nl: ["nieuw"]}, {cat: 'a8', fr: "la balade", nl: ["de tocht"]},
+      {cat: 'a8', fr: "la chute", nl: ["de val"]}
+    ];
+
+    let frTasks=[], frPos=0, frScore=0, frStreak=0, frAnswered=false, frCurrent=null;
+
+    $('startFransBtn').addEventListener('click', () => {
+      const dir = $('frDirection').value;
+      const range = $('frRange').value;
+      const count = Number($('frCount').value);
+
+      let subset = frenchList;
+      if(range !== 'all') {
+        subset = frenchList.filter(w => w.cat === range);
+        if(subset.length === 0) subset = frenchList;
+      }
+
+      frTasks = [];
+      for(let i=0; i<count; i++){
+        let w = subset[Math.floor(Math.random()*subset.length)];
+        let mode = dir;
+        if(mode==='mix') mode = Math.random()>0.5 ? 'nl_fr' : 'fr_nl';
+
+        if(mode==='nl_fr'){
+          frTasks.push({ topic: 'Nederlands → Frans', q: `Wat is de Franse vertaling van: <strong>${w.nl[0]}</strong>?`, accepted: w.nl.concat([w.fr]), hint: `Begint met "${w.fr[0].toUpperCase()}"...`, solution: `${w.nl[0]} = ${w.fr}` });
+        } else {
+          frTasks.push({ topic: 'Frans → Nederlands', q: `Wat is de Nederlandse vertaling van: <strong>${w.fr}</strong>?`, accepted: w.nl, hint: `Begint met "${w.nl[0][0].toUpperCase()}"...`, solution: `${w.fr} = ${w.nl[0]}` });
+        }
+      }
+
+      frPos=0; frScore=0; frStreak=0;
+      $('fransTaskCard').classList.remove('hidden');
+      renderFransTask();
+    });
+
+    function renderFransTask() {
+      frCurrent = frTasks[frPos];
+      frAnswered = false;
+      $('frProgressBadge').textContent = `Woord ${frPos+1} van ${frTasks.length}`;
+      $('frTopicBadge').textContent = frCurrent.topic;
+      $('frQuestionText').innerHTML = frCurrent.q;
+      $('frAnswerInput').value = '';
+      $('frAnswerInput').disabled = false;
+      $('frAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-slate-300 focus:border-rose-500 outline-none text-base sm:text-lg bg-white text-slate-900 shadow-2xs';
+      $('frFeedbackBox').className = 'hidden p-4 rounded-3xl border text-sm sm:text-base';
+      $('frHintBox').classList.add('hidden');
+      $('frCheckBtn').disabled = false;
+      $('frNextBtn').disabled = true;
+      $('frAnswerInput').focus();
+    }
+
+    $('frCheckBtn').addEventListener('click', () => {
+      if(!frCurrent || frAnswered) return;
+      let given = $('frAnswerInput').value.trim().toLowerCase();
+      if(!given) return;
+
+      frAnswered = true;
+      let ok = frCurrent.accepted.some(acc => acc.toLowerCase().replace(/[^a-zà-ÿäëïöüáéíóúnsœæ]/g,'') === given.replace(/[^a-zà-ÿäëïöüáéíóúnsœæ]/g,''));
+
+      stats.frAttempted++;
+      if(ok){
+        frScore++; frStreak++; stats.frCorrect++; stats.totalPoints += 50; saveStats();
+        if(typeof speedrunActive !== 'undefined' && speedrunActive) {
+          speedrunCorrectCount++;
+          frPos++; renderFransTask();
+          return;
+        }
+        animateCard($('fransTaskCard'), 'correct');
+        triggerConfetti($('frCheckBtn'));
+
+        $('frStreak').textContent = frStreak;
+        $('frAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-emerald-500 bg-emerald-50/30 outline-none text-base sm:text-lg font-bold text-emerald-900';
+        $('frFeedbackBox').className = 'p-4 rounded-3xl border bg-emerald-50 border-emerald-200 text-emerald-950 text-sm sm:text-base';
+        $('frFeedbackBox').innerHTML = `🎉 Helemaal goed! Juiste vertaling: <strong>${frCurrent.solution}</strong>`;
+        $('frFeedbackBox').classList.remove('hidden');
+      } else {
+        frStreak = 0; saveStats();
+        animateCard($('fransTaskCard'), 'wrong');
+
+        $('frStreak').textContent = frStreak;
+        $('frAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-rose-500 bg-rose-50/30 outline-none text-base sm:text-lg font-bold text-rose-900';
+        $('frFeedbackBox').className = 'p-4 rounded-3xl border bg-rose-50 border-rose-200 text-rose-950 text-sm sm:text-base';
+        $('frFeedbackBox').innerHTML = `❌ Helaas, de juiste vertaling is: <strong>${frCurrent.solution}</strong>`;
+        $('frFeedbackBox').classList.remove('hidden');
+      }
+
+      $('frCheckBtn').disabled = true;
+      $('frAnswerInput').disabled = true;
+      $('frNextBtn').disabled = false;
+    });
+
+    $('frHintBtn').addEventListener('click', () => {
+      if(!frCurrent) return;
+      $('frHintBox').textContent = '💡 Hint: ' + frCurrent.hint;
+      $('frHintBox').classList.remove('hidden');
+    });
+
+    $('frNextBtn').addEventListener('click', () => {
+      if(frPos < frTasks.length - 1){ frPos++; renderFransTask(); }
+      else {
+        $('frQuestionText').textContent = `🏆 Geweldig gedaan! Je hebt ${frScore} van de ${frTasks.length} woorden goed!`;
+        $('frFeedbackBox').className = 'p-4 rounded-3xl border bg-amber-50 border-amber-200 text-amber-950 font-bold';
+        $('frFeedbackBox').textContent = 'Start een nieuwe ronde om verder te oefenen.';
+        $('frFeedbackBox').classList.remove('hidden');
+        $('frNextBtn').disabled = true;
+      }
+    });
+
+    // Uitspraak & Speedrun Logica
+    function speakText(text, lang) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+    function speakCurrentSp() {
+      if (!spCurrent) return;
+      let w = spCurrent.solution.includes('=') ? spCurrent.solution.split('=')[1].trim() : spCurrent.solution;
+      speakText(w, 'es-ES');
+    }
+    function speakCurrentFr() {
+      if (!frCurrent) return;
+      let w = frCurrent.solution.includes('=') ? frCurrent.solution.split('=')[1].trim() : frCurrent.solution;
+      speakText(w, 'fr-FR');
+    }
+
+    let speedrunActive = false, speedrunTimer = null, speedrunTimeLeft = 60, speedrunCorrectCount = 0;
+
+    function startSpSpeedrun() {
+      spTasks = [];
+      for(let i=0; i<100; i++){
+        let w = spanishList[Math.floor(Math.random()*spanishList.length)];
+        let mode = Math.random() > 0.5 ? 'nl_es' : 'es_nl';
+        if(mode==='nl_es'){
+          spTasks.push({ topic: '⚡ Spaans Speedrun (NL → SP)', q: `⚡ [SPEEDRUN] Spaans voor: <strong>${w.nl[0]}</strong>`, accepted: [w.es], solution: `${w.nl[0]} = ${w.es}` });
+        } else {
+          spTasks.push({ topic: '⚡ Spaans Speedrun (SP → NL)', q: `⚡ [SPEEDRUN] Nederlands voor: <strong>${w.es}</strong>`, accepted: w.nl, solution: `${w.es} = ${w.nl[0]}` });
+        }
+      }
+      spPos = 0; speedrunCorrectCount = 0; speedrunTimeLeft = 60; speedrunActive = true;
+      $('spaansTaskCard').classList.remove('hidden');
+      renderSpaansTask();
+      startSpeedrunCountdown('Spaans');
+    }
+
+    function startFrFransSpeedrun() {
+      frTasks = [];
+      for(let i=0; i<100; i++){
+        let w = frenchList[Math.floor(Math.random()*frenchList.length)];
+        let mode = Math.random() > 0.5 ? 'nl_fr' : 'fr_nl';
+        if(mode==='nl_fr'){
+          frTasks.push({ topic: '⚡ Frans Speedrun (NL → FR)', q: `⚡ [SPEEDRUN] Frans voor: <strong>${w.nl[0]}</strong>`, accepted: w.nl.concat([w.fr]), solution: `${w.nl[0]} = ${w.fr}` });
+        } else {
+          frTasks.push({ topic: '⚡ Frans Speedrun (FR → NL)', q: `⚡ [SPEEDRUN] Nederlands voor: <strong>${w.fr}</strong>`, accepted: w.nl, solution: `${w.fr} = ${w.nl[0]}` });
+        }
+      }
+      frPos = 0; speedrunCorrectCount = 0; speedrunTimeLeft = 60; speedrunActive = true;
+      $('fransTaskCard').classList.remove('hidden');
+      $('fransFlashcardWrapper').classList.add('hidden');
+      renderFransTask();
+      startSpeedrunCountdown('Frans');
+    }
+
+    function startSpeedrunCountdown(subjectName) {
+      if (speedrunTimer) clearInterval(speedrunTimer);
+      let hudId = subjectName === 'Spaans' ? 'spProgressBadge' : 'frProgressBadge';
+      speedrunTimer = setInterval(() => {
+        speedrunTimeLeft--;
+        let badge = $(hudId);
+        if (badge) badge.textContent = `⚡ Tijd: ${speedrunTimeLeft}s | Goed: ${speedrunCorrectCount}`;
+        if (speedrunTimeLeft <= 0) {
+          clearInterval(speedrunTimer);
+          speedrunActive = false;
+          if (subjectName === 'Spaans') {
+            $('spQuestionText').textContent = `⚡ SPEEDRUN KLAAR! ${speedrunCorrectCount} woorden goed!`;
+            $('spCheckBtn').disabled = true; $('spAnswerInput').disabled = true;
+          } else {
+            $('frQuestionText').textContent = `⚡ SPEEDRUN KLAAR! ${speedrunCorrectCount} woorden goed!`;
+            $('frCheckBtn').disabled = true; $('frAnswerInput').disabled = true;
+          }
+          stats.totalPoints += speedrunCorrectCount * 15;
+          saveStats();
+          triggerConfetti(document.body);
+        }
+      }, 1000);
+    }
+
+    // Flashcard logica Frans & Eigen
+    let frFcCards = [], frFcPos = 0, frFcShowingAnswer = false;
+    function startFransFlashcards() {
+      const range = $('frRange').value;
+      const count = Number($('frCount').value);
+      let subset = frenchList;
+      if(range !== 'all') {
+        subset = frenchList.filter(w => w.cat === range);
+        if(subset.length === 0) subset = frenchList;
+      }
+      frFcCards = [...subset].sort(() => Math.random() - 0.5).slice(0, count).map(w => ({ q: w.nl[0], a: w.fr }));
+      frFcPos = 0; frFcShowingAnswer = false;
+      $('fransTaskCard').classList.add('hidden');
+      $('fransFlashcardWrapper').classList.remove('hidden');
+      renderFransFlashcard();
+    }
+    function renderFransFlashcard() {
+      if (frFcPos >= frFcCards.length) {
+        $('fransFlashcardWrapper').innerHTML = `<div class="glass-card rounded-[32px] p-8 text-center space-y-6"><h2>Klaar!</h2><button onclick="backToFransManager()" class="px-6 py-3 bg-rose-600 text-white rounded-full font-bold">Terug</button></div>`;
+        return;
+      }
+      frFcShowingAnswer = false;
+      const card = frFcCards[frFcPos];
+      $('frFcProgressBadge').textContent = `Kaart ${frFcPos + 1} van ${frFcCards.length}`;
+      $('frFcCardLabel').textContent = 'Vraag (NL) ❓';
+      $('frFcCardText').textContent = card.q;
+      $('frFcCardHintText').textContent = 'Klik om antwoord te zien';
+    }
+    function flipFransFlashcard() {
+      const card = frFcCards[frFcPos];
+      if (!card) return;
+      frFcShowingAnswer = !frFcShowingAnswer;
+      if (frFcShowingAnswer) {
+        $('frFcCardLabel').textContent = 'Antwoord ✨';
+        $('frFcCardText').textContent = card.a;
+      } else {
+        $('frFcCardLabel').textContent = 'Vraag (NL) ❓';
+        $('frFcCardText').textContent = card.q;
+      }
+    }
+    function frFcAnswerResult(known) {
+      frFcPos++;
+      stats.frAttempted++;
+      if(known) { stats.frCorrect++; stats.totalPoints += 25; saveStats(); }
+      renderFransFlashcard();
+    }
+    function backToFransManager() {
+      $('fransFlashcardWrapper').classList.add('hidden');
+    }
+
+    // Eigen Woordenlijsten & Community (Inclusief werkende deelcode functionaliteit)
+    let customLists = JSON.parse(localStorage.getItem('academie_custom_lists_v1') || '[]');
+    let communityLists = JSON.parse(localStorage.getItem('academie_community_lists_v1') || '[]');
+    let editingListIndex = null;
+
+    function saveCustomLists() {
+      localStorage.setItem('academie_custom_lists_v1', JSON.stringify(customLists));
+      renderSavedLists();
+    }
+    function renderSavedLists() {
+      const container = $('savedListsContainer');
+      if (!container) return;
+      if (customLists.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500 italic col-span-2">Nog geen eigen lijsten opgeslagen.</p>';
+        return;
+      }
+      container.innerHTML = customLists.map((list, idx) => `
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col gap-2.5">
+          <div class="flex items-center justify-between">
+            <div><span class="text-sm font-black text-slate-900 block">${list.name}</span><span class="text-xs text-slate-500">${list.pairs.length} woorden</span></div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="startCustomList(${idx})" class="px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs">Oefen</button>
+              <button onclick="editCustomList(${idx})" class="p-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold" title="Bewerken">✏️</button>
+              <button onclick="deleteCustomList(${idx})" class="p-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-bold" title="Verwijderen">🗑️</button>
+            </div>
+          </div>
+          <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+            <span class="text-[11px] text-emerald-700 font-semibold">Deel deze lijst met klasgenoten:</span>
+            <button onclick="generateShareCode(${idx})" class="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold text-xs transition-all">🔗 Deelcode maken</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function generateShareCode(idx) {
+      const list = customLists[idx];
+      if (!list) return;
+      try {
+        const jsonStr = JSON.stringify(list);
+        const encoded = 'ACAD-' + btoa(unescape(encodeURIComponent(jsonStr)));
+        prompt("Kopieer deze deelcode en stuur hem naar je vrienden:", encoded);
+      } catch(e) {
+        alert("Kon geen deelcode genereren.");
+      }
+    }
+
+    function renderCommunityLists() {
+      const container = $('communityListsContainer');
+      if (!container) return;
+      if (communityLists.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500 italic col-span-2">Geen gedeelde lijsten gevonden.</p>';
+        return;
+      }
+      container.innerHTML = communityLists.map((list, idx) => `
+        <div class="p-3.5 rounded-2xl bg-white border border-emerald-200 flex justify-between items-center">
+          <div><span class="text-xs font-black text-slate-900 block">${list.name}</span><span class="text-[10px] text-slate-500">Door ${list.author}</span></div>
+          <button onclick="copyCommunityToOwn(${idx})" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs">+ Opslaan</button>
+        </div>
+      `).join('');
+    }
+    function copyCommunityToOwn(idx) {
+      const list = communityLists[idx];
+      if (!list) return;
+      customLists.push({ name: list.name, pairs: JSON.parse(JSON.stringify(list.pairs)) });
+      saveCustomLists();
+      alert(`Lijst "${list.name}" is toegevoegd!`);
+    }
+    function toggleImportCodeBox() { $('importCodeWrapper').classList.toggle('hidden'); }
+    
+    function importSharedListCode() {
+      const raw = ($('importShareCodeInput')?.value || '').trim();
+      if (!raw.startsWith('ACAD-')) { 
+        alert('Ongeldige deelcode. Een geldige deelcode begint met "ACAD-".'); 
+        return; 
+      }
+      try {
+        const base64Str = raw.slice(5);
+        const jsonStr = decodeURIComponent(escape(atob(base64Str)));
+        const parsed = JSON.parse(jsonStr);
+        if (!parsed.name || !parsed.pairs) {
+          throw new Error('Ongeldige data');
+        }
+        customLists.push({ name: parsed.name, pairs: parsed.pairs });
+        saveCustomLists();
+        $('importShareCodeInput').value = '';
+        $('importCodeWrapper').classList.add('hidden');
+        alert(`Woordenlijst "${parsed.name}" is succesvol toegevoegd aan je eigen lijsten!`);
+      } catch(e) { 
+        alert('Fout bij het importeren van de deelcode. Controleer of de code correct is gekopieerd.'); 
+      }
+    }
+
+    function editCustomList(idx) {
+      editingListIndex = idx;
+      $('eigenListName').value = customLists[idx].name;
+      $('eigenListText').value = customLists[idx].pairs.map(p => `${p.q} = ${p.a}`).join('\n');
+      $('cancelEditEigenBtn').classList.remove('hidden');
+      window.scrollTo({top: $('eigenListName').offsetTop, behavior: 'smooth'});
+    }
+    function cancelEditCustomList() {
+      editingListIndex = null;
+      $('eigenListName').value = '';
+      $('eigenListText').value = '';
+      $('cancelEditEigenBtn').classList.add('hidden');
+    }
+    $('saveEigenListBtn').addEventListener('click', () => {
+      const name = $('eigenListName').value.trim();
+      const rawText = $('eigenListText').value.trim();
+      if (!name || !rawText) return;
+      const pairs = rawText.split('\n').map(l => {
+        let p = l.split('=');
+        if (p.length < 2) p = l.split('-');
+        return p.length >= 2 ? { q: p[0].trim(), a: p.slice(1).join('=').trim() } : null;
+      }).filter(Boolean);
+      if (editingListIndex !== null) {
+        customLists[editingListIndex] = { name, pairs };
+        cancelEditCustomList();
+      } else {
+        customLists.push({ name, pairs });
+        $('eigenListName').value = ''; $('eigenListText').value = '';
+      }
+      saveCustomLists();
+    });
+    function deleteCustomList(idx) {
+      customLists.splice(idx, 1);
+      saveCustomLists();
+    }
+
+    let eigenTasks = [], eigenPos = 0, eigenScore = 0, eigenStreak = 0, eigenAnswered = false, eigenCurrent = null;
+    function startCustomList(idx) {
+      const list = customLists[idx];
+      eigenTasks = list.pairs.map(p => ({ topic: list.name, q: `Vertaling van: <strong>${p.q}</strong>`, accepted: [p.a], solution: `${p.q} = ${p.a}` }));
+      eigenPos = 0; eigenScore = 0; eigenStreak = 0;
+      $('eigenManageBox').classList.add('hidden');
+      $('eigenTaskCardWrapper').classList.remove('hidden');
+      renderEigenTask();
+    }
+    function backToEigenManager() {
+      $('eigenTaskCardWrapper').classList.add('hidden');
+      $('eigenManageBox').classList.remove('hidden');
+      renderSavedLists();
+    }
+    function renderEigenTask() {
+      eigenCurrent = eigenTasks[eigenPos];
+      eigenAnswered = false;
+      $('eigenProgressBadge').textContent = `Woord ${eigenPos + 1} van ${eigenTasks.length}`;
+      $('eigenTopicBadge').textContent = eigenCurrent.topic;
+      $('eigenQuestionText').innerHTML = eigenCurrent.q;
+      $('eigenAnswerInput').value = '';
+      $('eigenAnswerInput').disabled = false;
+      $('eigenCheckBtn').disabled = false;
+      $('eigenNextBtn').disabled = true;
+      $('eigenAnswerInput').focus();
+    }
+    $('eigenCheckBtn').addEventListener('click', () => {
+      if (!eigenCurrent || eigenAnswered) return;
+      let given = $('eigenAnswerInput').value.trim().toLowerCase();
+      eigenAnswered = true;
+      let ok = eigenCurrent.accepted.some(acc => acc.toLowerCase() === given);
+      stats.eigenAttempted++;
+      if (ok) {
+        eigenScore++; eigenStreak++; stats.eigenCorrect++; stats.totalPoints += 50; saveStats();
+        animateCard($('eigenTaskCardWrapper'), 'correct');
+        triggerConfetti($('eigenCheckBtn'));
+      } else {
+        eigenStreak = 0; saveStats();
+        animateCard($('eigenTaskCardWrapper'), 'wrong');
+      }
+      $('eigenCheckBtn').disabled = true;
+      $('eigenAnswerInput').disabled = true;
+      $('eigenNextBtn').disabled = false;
+    });
+    $('eigenNextBtn').addEventListener('click', () => {
+      if (eigenPos < eigenTasks.length - 1) { eigenPos++; renderEigenTask(); }
+      else {
+        $('eigenQuestionText').textContent = `🏆 Klaar! ${eigenScore} van de ${eigenTasks.length} goed!`;
+        $('eigenNextBtn').disabled = true;
+      }
+    });
+
+    // Enter-toets ondersteuning
+    function setupEnterKey(inputEl, checkBtnEl, nextBtnEl) {
+      inputEl.addEventListener('keydown', e => {
+        if(e.key === 'Enter') {
+          e.preventDefault();
+          if(!checkBtnEl.disabled) checkBtnEl.click();
+          else if(!nextBtnEl.disabled) nextBtnEl.click();
+        }
+      });
+    }
+    setupEnterKey($('mathAnswerInput'), $('mathCheckBtn'), $('mathNextBtn'));
+    setupEnterKey($('spAnswerInput'), $('spCheckBtn'), $('spNextBtn'));
+    setupEnterKey($('frAnswerInput'), $('frCheckBtn'), $('frNextBtn'));
+    setupEnterKey($('eigenAnswerInput'), $('eigenCheckBtn'), $('eigenNextBtn'));
+
+    renderSavedLists();
+    renderCommunityLists();
+  </script>
+</body>
+</html>
