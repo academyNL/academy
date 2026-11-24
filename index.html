@@ -653,15 +653,23 @@
 
       <div id="eigenTaskCardWrapper" class="hidden space-y-5">
         <div class="glass-card rounded-[32px] border border-white p-6 sm:p-8 shadow-xl space-y-6">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div class="flex items-center gap-2">
               <span id="eigenTopicBadge" class="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-900 text-xs font-extrabold">Eigen Lijst</span>
               <span id="eigenProgressBadge" class="text-xs font-bold text-slate-500">Woord 1 van 10</span>
             </div>
             <div class="flex items-center gap-3">
-              <span class="text-xs font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">Reeks: <strong id="eigenStreak" class="math-font">0</strong> 🔥</span>
               <button onclick="backToEigenManager()" class="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">← Lijsten</button>
             </div>
+            <label class="text-xs font-bold text-slate-600 flex items-center gap-2">Vertaalrichting
+              <select id="eigenDirection" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800">
+                <option value="qa">Vraag → Antwoord</option><option value="aq">Antwoord → Vraag</option><option value="mix">Gemengd</option>
+              </select>
+            </label>
+          </div>
+          <div class="flex items-center gap-4 text-xs font-extrabold text-slate-600">
+            <span>Score: <strong id="eigenScore" class="text-emerald-700">0</strong></span>
+            <span>Reeks: <strong id="eigenStreak" class="text-emerald-700">0</strong> 🔥</span>
           </div>
 
           <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 text-white rounded-[26px] p-6 sm:p-8 shadow-inner">
@@ -696,14 +704,26 @@
   <script>
     const $=id=>document.getElementById(id);
 
+    // Veilige Local Storage helpers: voorkom dat ongeldige opgeslagen data de site laat crashen.
+    function readLocalStorage(key, fallback) {
+      try { const raw = localStorage.getItem(key); return raw === null ? fallback : JSON.parse(raw); }
+      catch (e) { console.warn('Academie-opslag kon niet worden gelezen:', key, e); return fallback; }
+    }
+    function writeLocalStorage(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+      catch (e) { console.warn('Academie-opslag kon niet worden geschreven:', key, e); return false; }
+    }
+
     // Globale statistieken en opslag (inclusief gebruikerslevels op basis van punten)
-    let stats = JSON.parse(localStorage.getItem('academie_stats_v6') || JSON.stringify({
+    let stats = readLocalStorage('academie_stats_v6', {
       totalPoints: 0,
       mathAttempted: 0, mathCorrect: 0,
       spAttempted: 0, spCorrect: 0,
       frAttempted: 0, frCorrect: 0,
       eigenAttempted: 0, eigenCorrect: 0
-    }));
+    });
+    // Zorg dat oudere/ongeldige data ontbrekende statistiekvelden aanvult.
+    stats = Object.assign({ totalPoints: 0, mathAttempted: 0, mathCorrect: 0, spAttempted: 0, spCorrect: 0, frAttempted: 0, frCorrect: 0, eigenAttempted: 0, eigenCorrect: 0 }, stats || {});
 
     // Functie om op basis van punten uit te rekenen welk level de gebruiker heeft (elke 500 punten = 1 level)
     function getUserLevelInfo(points) {
@@ -728,7 +748,7 @@
     }
 
     function saveStats() {
-      localStorage.setItem('academie_stats_v6', JSON.stringify(stats));
+      writeLocalStorage('academie_stats_v6', stats);
       $('navTotalPoints').textContent = stats.totalPoints + ' pt';
 
       let info = getUserLevelInfo(stats.totalPoints);
@@ -1430,13 +1450,14 @@
     }
 
     // Eigen Woordenlijsten & Community (Inclusief werkende deelcode functionaliteit)
-    let customLists = JSON.parse(localStorage.getItem('academie_custom_lists_v1') || '[]');
-    let communityLists = JSON.parse(localStorage.getItem('academie_community_lists_v1') || '[]');
+    let customLists = readLocalStorage('academie_custom_lists_v1', []);
+    let communityLists = readLocalStorage('academie_community_lists_v1', []);
     let editingListIndex = null;
 
     function saveCustomLists() {
-      localStorage.setItem('academie_custom_lists_v1', JSON.stringify(customLists));
+      const saved = writeLocalStorage('academie_custom_lists_v1', customLists);
       renderSavedLists();
+      return saved;
     }
     function renderSavedLists() {
       const container = $('savedListsContainer');
@@ -1450,7 +1471,13 @@
           <div class="flex items-center justify-between">
             <div><span class="text-sm font-black text-slate-900 block">${list.name}</span><span class="text-xs text-slate-500">${list.pairs.length} woorden</span></div>
             <div class="flex items-center gap-1.5">
-              <button onclick="startCustomList(${idx})" class="px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs">Oefen</button>
+              <div class="flex flex-wrap gap-1.5">
+                ${Array.from({length: Math.ceil(list.pairs.length / 15)}, (_, part) => {
+                  const start = part * 15;
+                  const end = Math.min(start + 15, list.pairs.length);
+                  return `<button onclick="startCustomList(${idx}, ${start}, ${end})" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">${start + 1} t/m ${end}</button>`;
+                }).join('')}
+              </div>
               <button onclick="editCustomList(${idx})" class="p-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold" title="Bewerken">✏️</button>
               <button onclick="deleteCustomList(${idx})" class="p-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-bold" title="Verwijderen">🗑️</button>
             </div>
@@ -1463,61 +1490,81 @@
       `).join('');
     }
 
-    function generateShareCode(idx) {
+    // Deelcodes zijn zelfstandig: ze bevatten de volledige lijst en werken ook tussen apparaten.
+    function encodeShareData(value) {
+      const bytes = new TextEncoder().encode(JSON.stringify(value));
+      let binary = '';
+      bytes.forEach(byte => binary += String.fromCharCode(byte));
+      return 'ACAD-' + btoa(binary);
+    }
+    function decodeShareData(code) {
+      const binary = atob(code);
+      const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
+    }
+    async function generateShareCode(idx) {
       const list = customLists[idx];
       if (!list) return;
       try {
-        const jsonStr = JSON.stringify(list);
-        const encoded = 'ACAD-' + btoa(unescape(encodeURIComponent(jsonStr)));
-        prompt("Kopieer deze deelcode en stuur hem naar je vrienden:", encoded);
+        const code = encodeShareData({ version: 1, name: list.name, pairs: list.pairs });
+        try {
+          await navigator.clipboard.writeText(code);
+          alert('Deelcode gekopieerd! Stuur deze code naar je klasgenoot.\n\n' + code);
+        } catch (clipboardError) {
+          // Werkt ook wanneer de browser klembordtoegang blokkeert (bijv. lokaal bestand).
+          prompt('Kopieer deze volledige deelcode en stuur hem naar je klasgenoot:', code);
+        }
       } catch(e) {
-        alert("Kon geen deelcode genereren.");
+        console.error(e);
+        alert('Kon geen deelcode maken. Probeer het opnieuw.');
       }
     }
 
     function renderCommunityLists() {
       const container = $('communityListsContainer');
       if (!container) return;
-      if (communityLists.length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-500 italic col-span-2">Geen gedeelde lijsten gevonden.</p>';
+      const term = ($('searchOtherListsInput')?.value || '').trim().toLowerCase();
+      const visible = communityLists.filter(list => `${list.name} ${list.author || ''}`.toLowerCase().includes(term));
+      if (visible.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500 italic col-span-2">Geen gedeelde lijsten gevonden. Je kunt ook een deelcode plakken.</p>';
         return;
       }
-      container.innerHTML = communityLists.map((list, idx) => `
-        <div class="p-3.5 rounded-2xl bg-white border border-emerald-200 flex justify-between items-center">
-          <div><span class="text-xs font-black text-slate-900 block">${list.name}</span><span class="text-[10px] text-slate-500">Door ${list.author}</span></div>
+      container.innerHTML = visible.map((list) => {
+        const idx = communityLists.indexOf(list);
+        return `<div class="p-3.5 rounded-2xl bg-white border border-emerald-200 flex justify-between items-center">
+          <div><span class="text-xs font-black text-slate-900 block">${list.name}</span><span class="text-[10px] text-slate-500">Door ${list.author || 'onbekend'}</span></div>
           <button onclick="copyCommunityToOwn(${idx})" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs">+ Opslaan</button>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
     }
     function copyCommunityToOwn(idx) {
       const list = communityLists[idx];
-      if (!list) return;
+      if (!list || !Array.isArray(list.pairs)) return;
       customLists.push({ name: list.name, pairs: JSON.parse(JSON.stringify(list.pairs)) });
       saveCustomLists();
       alert(`Lijst "${list.name}" is toegevoegd!`);
     }
     function toggleImportCodeBox() { $('importCodeWrapper').classList.toggle('hidden'); }
-    
+
     function importSharedListCode() {
-      const raw = ($('importShareCodeInput')?.value || '').trim();
-      if (!raw.startsWith('ACAD-')) { 
-        alert('Ongeldige deelcode. Een geldige deelcode begint met "ACAD-".'); 
-        return; 
+      const raw = ($('importShareCodeInput')?.value || '').trim().replace(/\s+/g, '');
+      if (!raw.toUpperCase().startsWith('ACAD-')) {
+        alert('Ongeldige deelcode. Een geldige deelcode begint met ACAD-.');
+        return;
       }
       try {
-        const base64Str = raw.slice(5);
-        const jsonStr = decodeURIComponent(escape(atob(base64Str)));
-        const parsed = JSON.parse(jsonStr);
-        if (!parsed.name || !parsed.pairs) {
-          throw new Error('Ongeldige data');
-        }
-        customLists.push({ name: parsed.name, pairs: parsed.pairs });
-        saveCustomLists();
+        const payload = decodeShareData(raw.slice(5));
+        if (!payload || typeof payload.name !== 'string' || !payload.name.trim() || !Array.isArray(payload.pairs) || payload.pairs.length === 0) throw new Error('Ongeldige lijst');
+        const pairs = payload.pairs.map(pair => ({ q: String(pair.q ?? '').trim(), a: String(pair.a ?? '').trim() })).filter(pair => pair.q && pair.a);
+        if (!pairs.length || pairs.length !== payload.pairs.length) throw new Error('Ongeldige woorden');
+        customLists.push({ name: payload.name.trim(), pairs });
+        if (!saveCustomLists()) { customLists.pop(); throw new Error('Opslaan mislukt'); }
         $('importShareCodeInput').value = '';
         $('importCodeWrapper').classList.add('hidden');
-        alert(`Woordenlijst "${parsed.name}" is succesvol toegevoegd aan je eigen lijsten!`);
-      } catch(e) { 
-        alert('Fout bij het importeren van de deelcode. Controleer of de code correct is gekopieerd.'); 
+        alert(`Woordenlijst "${payload.name.trim()}" is succesvol toegevoegd aan je eigen lijsten!`);
+      } catch(e) {
+        console.error('Deelcode import mislukt:', e);
+        alert('Deze deelcode is ongeldig of beschadigd. Controleer of je de volledige code hebt gekopieerd.');
       }
     }
 
@@ -1558,12 +1605,24 @@
     }
 
     let eigenTasks = [], eigenPos = 0, eigenScore = 0, eigenStreak = 0, eigenAnswered = false, eigenCurrent = null;
-    function startCustomList(idx) {
+    function normalizeOwnAnswer(value) {
+      return String(value || '').trim().toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+    }
+    function startCustomList(idx, start = 0, end = null) {
       const list = customLists[idx];
-      eigenTasks = list.pairs.map(p => ({ topic: list.name, q: `Vertaling van: <strong>${p.q}</strong>`, accepted: [p.a], solution: `${p.q} = ${p.a}` }));
+      if (!list || !Array.isArray(list.pairs) || !list.pairs.length) return;
+      // Oefen in blokken van 15 woorden; het laatste blok mag korter zijn.
+      const rangeEnd = end === null ? list.pairs.length : Math.min(end, list.pairs.length);
+      const rangeStart = Math.max(0, Math.min(start, rangeEnd - 1));
+      const selectedPairs = list.pairs.slice(rangeStart, rangeEnd);
+      if (!selectedPairs.length) return;
+      eigenTasks = selectedPairs.map(p => ({ q: String(p.q), a: String(p.a), topic: list.name }));
       eigenPos = 0; eigenScore = 0; eigenStreak = 0;
+      $('eigenDirection').value = 'qa';
       $('eigenManageBox').classList.add('hidden');
       $('eigenTaskCardWrapper').classList.remove('hidden');
+      $('eigenScore').textContent = '0';
+      $('eigenStreak').textContent = '0';
       renderEigenTask();
     }
     function backToEigenManager() {
@@ -1572,40 +1631,71 @@
       renderSavedLists();
     }
     function renderEigenTask() {
+      if (eigenPos >= eigenTasks.length) return;
       eigenCurrent = eigenTasks[eigenPos];
       eigenAnswered = false;
+      let direction = $('eigenDirection').value;
+      if (direction === 'mix') direction = Math.random() < 0.5 ? 'qa' : 'aq';
+      eigenCurrent.direction = direction;
+      const question = direction === 'aq' ? eigenCurrent.a : eigenCurrent.q;
+      const acceptedText = direction === 'aq' ? eigenCurrent.q : eigenCurrent.a;
+      eigenCurrent.accepted = acceptedText.split(/[;|]/).map(x => x.trim()).filter(Boolean);
+      eigenCurrent.solution = direction === 'aq' ? `${eigenCurrent.a} = ${eigenCurrent.q}` : `${eigenCurrent.q} = ${eigenCurrent.a}`;
       $('eigenProgressBadge').textContent = `Woord ${eigenPos + 1} van ${eigenTasks.length}`;
       $('eigenTopicBadge').textContent = eigenCurrent.topic;
-      $('eigenQuestionText').innerHTML = eigenCurrent.q;
+      $('eigenQuestionText').innerHTML = `Wat is de vertaling van: <strong>${question.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</strong>?`;
       $('eigenAnswerInput').value = '';
       $('eigenAnswerInput').disabled = false;
+      $('eigenAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-slate-300 focus:border-emerald-500 outline-none text-base sm:text-lg bg-white text-slate-900 shadow-2xs';
+      $('eigenFeedbackBox').className = 'hidden p-4 rounded-3xl border text-sm sm:text-base';
+      $('eigenHintBox').classList.add('hidden');
       $('eigenCheckBtn').disabled = false;
       $('eigenNextBtn').disabled = true;
       $('eigenAnswerInput').focus();
     }
     $('eigenCheckBtn').addEventListener('click', () => {
       if (!eigenCurrent || eigenAnswered) return;
-      let given = $('eigenAnswerInput').value.trim().toLowerCase();
+      const given = normalizeOwnAnswer($('eigenAnswerInput').value);
+      if (!given) return;
       eigenAnswered = true;
-      let ok = eigenCurrent.accepted.some(acc => acc.toLowerCase() === given);
+      const ok = eigenCurrent.accepted.some(answer => normalizeOwnAnswer(answer) === given);
       stats.eigenAttempted++;
       if (ok) {
         eigenScore++; eigenStreak++; stats.eigenCorrect++; stats.totalPoints += 50; saveStats();
         animateCard($('eigenTaskCardWrapper'), 'correct');
         triggerConfetti($('eigenCheckBtn'));
+        $('eigenAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-emerald-500 bg-emerald-50/30 outline-none text-base sm:text-lg font-bold text-emerald-900';
+        $('eigenFeedbackBox').className = 'p-4 rounded-3xl border bg-emerald-50 border-emerald-200 text-emerald-950 text-sm sm:text-base';
+        $('eigenFeedbackBox').innerHTML = `🎉 Helemaal goed! <strong>${eigenCurrent.solution}</strong> · +50 punten`;
       } else {
         eigenStreak = 0; saveStats();
         animateCard($('eigenTaskCardWrapper'), 'wrong');
+        $('eigenAnswerInput').className = 'flex-1 px-5 py-4 rounded-full border-2 border-rose-500 bg-rose-50/30 outline-none text-base sm:text-lg font-bold text-rose-900';
+        $('eigenFeedbackBox').className = 'p-4 rounded-3xl border bg-rose-50 border-rose-200 text-rose-950 text-sm sm:text-base';
+        $('eigenFeedbackBox').innerHTML = `❌ Helaas, het juiste antwoord is: <strong>${eigenCurrent.solution}</strong>`;
       }
+      $('eigenFeedbackBox').classList.remove('hidden');
+      $('eigenScore').textContent = eigenScore;
+      $('eigenStreak').textContent = eigenStreak;
       $('eigenCheckBtn').disabled = true;
       $('eigenAnswerInput').disabled = true;
       $('eigenNextBtn').disabled = false;
+    });
+    $('eigenHintBtn').addEventListener('click', () => {
+      if (!eigenCurrent || eigenAnswered) return;
+      const answer = eigenCurrent.accepted[0] || '';
+      $('eigenHintBox').textContent = `💡 Hint: het antwoord begint met "${answer.charAt(0).toUpperCase()}" en heeft ${answer.length} tekens.`;
+      $('eigenHintBox').classList.remove('hidden');
     });
     $('eigenNextBtn').addEventListener('click', () => {
       if (eigenPos < eigenTasks.length - 1) { eigenPos++; renderEigenTask(); }
       else {
         $('eigenQuestionText').textContent = `🏆 Klaar! ${eigenScore} van de ${eigenTasks.length} goed!`;
+        $('eigenFeedbackBox').className = 'p-4 rounded-3xl border bg-amber-50 border-amber-200 text-amber-950 font-bold';
+        $('eigenFeedbackBox').textContent = `Je hebt ${eigenScore * 50} punten verdiend. Start een nieuwe ronde om verder te oefenen.`;
+        $('eigenFeedbackBox').classList.remove('hidden');
         $('eigenNextBtn').disabled = true;
+        $('eigenCheckBtn').disabled = true;
       }
     });
 
